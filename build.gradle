@@ -10,7 +10,8 @@ defaultTasks 'run'
 
 task run(type: JavaExec) {
     main = 'Main'
-    classpath = sourceSets.main.runtimeClasspath
+    //classpath = sourceSets.main.runtimeClasspath
+    //classpath += files('bots')
 }
 
 buildscript {
@@ -43,6 +44,13 @@ repositories {
     maven { url "http://jcenter.bintray.com" }
 }
 
+compileKotlin {
+    sourceCompatibility = jvm_version
+    kotlinOptions {
+        jvmTarget = jvm_version
+    }
+}
+
 compileJava {
     sourceCompatibility = jvm_version
     targetCompatibility = jvm_version
@@ -52,6 +60,7 @@ compileJava {
 
 sourceSets {
     main.java.srcDirs += src
+	main.kotlin.srcDirs += src
     main.resources.srcDirs += 'resources'
 }
 
@@ -62,7 +71,10 @@ jar {
         into(img)
     }
     manifest {
-        attributes 'Main-Class': 'Main'
+        attributes(
+                'Main-Class': 'Main',
+                "Class-Path": configurations.compile.collect { it.getName() }.join(' ')
+        )
     }
 }
 
@@ -78,7 +90,29 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-//task bot(type: )
+//task botsJava(type: JavaCompile, dependsOn: build) {
+//    source = fileTree(dir: 'bot', include: '**/*.java')
+//    classpath = files('build/classes/java/main')
+//    destinationDir = file('.')
+//}
+//
+//task botsKotlin(type: JavaCompile, dependsOn: build) {
+//    classpath = files('build/classes/java/main')
+//    classpath += files('build')
+//    classpath += sourceSets.main.runtimeClasspath
+//    sourceSets {
+//        main {
+//            kotlin {
+//
+//                srcDirs = ['bot']//fileTree(dir: 'bot', include: '**/*.kt')
+//            }
+//        }
+//    }
+//    src = fileTree(dir: 'bot', include: '**/*.kt')
+//    destinationDir = file('.')
+//}
+
+task bots(type: JavaCompile, dependsOn: ['botsKotlin', 'botsJava'])
 
 artifacts {
     archives sourcesJar
