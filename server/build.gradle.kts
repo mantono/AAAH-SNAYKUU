@@ -1,89 +1,70 @@
-apply plugin: 'java'
-apply plugin: 'kotlin'
-apply plugin: 'maven'
-
-group = 'xanindorf'
-version = '1.0'
-description = 'Snaykuu'
-
-defaultTasks 'run'
-
-task run(type: JavaExec) {
-    main = 'Main'
-    classpath = sourceSets.main.runtimeClasspath
+fun version(artifact: String): String {
+    val key = "version.${artifact.toLowerCase()}"
+    return project.ext[key]?.toString()
+        ?: throw IllegalStateException("No version found for artifact '$artifact'")
 }
 
-buildscript {
-    ext.kotlin_version = '1.2.41'
-    ext.jvm_version = '1.8'
+fun projectName(): String = project.name.replace("{", "").replace("}", "")
 
-    ext.jarName = 'snaykuu.jar'
-    ext.bin = 'classes'
-    ext.src = 'src'
-    ext.bot = 'bot'
-    ext.img = 'img'
-    ext.doc = 'doc'
-    ext.encoding = 'UTF-8'
+plugins {
+    id("application") apply true
+    id("org.jetbrains.kotlin.jvm") version "1.3.50" apply true
+    id("java") apply true
+}
 
-    repositories {
-        mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
+application {
+    mainClassName = "MainKt"
+}
+
+group = "snaykuu"
+version = "0.1.0"
+description = "An engine/API for programming Snake bots and pitting them against each other"
+
+defaultTasks = mutableListOf("test")
+
+repositories {
+    jcenter()
+    mavenCentral()
+    maven(url = "https://dl.bintray.com/kotlin/ktor")
 }
 
 dependencies {
-    runtime "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    runtime "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation("org.jetbrains.kotlin", "kotlin-stdlib-jdk8", "1.3.61")
+    implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8", "1.3.3")
+
+    // Logging
+    implementation("io.github.microutils", "kotlin-logging", "1.6.20")
+    // Enable for applications
+    // runtime("ch.qos.logback", "logback-classic", "1.2.3")
+
+    // Junit
+    testImplementation("org.junit.jupiter", "junit-jupiter-api", version("junit"))
+    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", version("junit"))
 }
 
-repositories {
-    maven { url "http://jcenter.bintray.com" }
-}
+tasks {
+    test {
+        useJUnitPlatform()
 
-compileJava {
-    sourceCompatibility = jvm_version
-    targetCompatibility = jvm_version
-    options.incremental = true
-    options.encoding = encoding
-}
-
-sourceSets {
-    main.java.srcDirs += src
-    main.resources.srcDirs += 'resources'
-}
-
-jar {
-    archiveName jarName
-    destinationDir = file('.')
-    from(img) {
-        into(img)
+        // Show test results.
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+        reports {
+            junitXml.isEnabled = false
+            html.isEnabled = true
+        }
     }
-    manifest {
-        attributes 'Main-Class': 'Main'
+
+    compileKotlin {
+        sourceCompatibility = version("jvm")
+        kotlinOptions {
+            jvmTarget = version("jvm")
+        }
     }
-}
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    description 'Create a Jar file for the application, including source'
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    javadoc.failOnError = false
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
-
-wrapper {
-    description = 'Generates gradlew[.bat] scripts for faster execution'
-    gradleVersion = '4.7'
+    wrapper {
+        description = "Generates gradlew[.bat] scripts for faster execution"
+        gradleVersion = version("gradle")
+    }
 }
