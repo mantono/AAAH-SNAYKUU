@@ -10,3 +10,10 @@
 
 # SNAYKUU Project file
 snaykuu
+
+# Editors
+.idea
+.vscode
+
+# Gradle
+.gradle
