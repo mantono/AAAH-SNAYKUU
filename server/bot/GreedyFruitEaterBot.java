@@ -1,6 +1,6 @@
 package bot;
 
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 import java.util.ArrayList;
 
 public class GreedyFruitEaterBot implements Brain

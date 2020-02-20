@@ -1,9 +1,9 @@
-package userInterface;
+package snaykuu.userInterface;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import gameLogic.Brain;
+import snaykuu.gameLogic.Brain;
 
 class BotClassLoader extends ClassLoader
 {

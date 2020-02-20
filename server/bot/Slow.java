@@ -1,6 +1,6 @@
 package bot;
 
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 
 public class Slow implements Brain
 {

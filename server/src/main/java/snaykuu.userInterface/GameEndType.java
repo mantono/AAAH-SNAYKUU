@@ -1,4 +1,4 @@
-package userInterface;
+package snaykuu.userInterface;
 
 public enum GameEndType
 {

@@ -1,6 +1,6 @@
-package userInterface;
+package snaykuu.userInterface;
 
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 import javax.swing.*;
 import javax.swing.filechooser.*;
 import java.awt.*;

@@ -1,8 +1,8 @@
-package userInterface;
+package snaykuu.userInterface;
 
 import javax.swing.*;
 import java.awt.*;
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 
 public class MainWindow extends JFrame
 {

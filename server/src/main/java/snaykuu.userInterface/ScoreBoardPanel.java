@@ -1,4 +1,4 @@
-package userInterface;
+package snaykuu.userInterface;
 
 import javax.swing.*;
 import java.awt.GridBagLayout;
@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import static java.awt.GridBagConstraints.*;
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 
 public class ScoreBoardPanel extends JPanel
 {

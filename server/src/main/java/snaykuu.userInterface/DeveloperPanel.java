@@ -1,4 +1,4 @@
-package userInterface;
+package snaykuu.userInterface;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -12,7 +12,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import static java.awt.GridBagConstraints.*;
 
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 
 class DeveloperPanel extends JPanel
 {

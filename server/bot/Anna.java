@@ -3,12 +3,12 @@ package bot;
 import java.text.DecimalFormat;
 import java.util.*;
 
-import gameLogic.Brain;
-import gameLogic.Direction;
-import gameLogic.GameState;
-import gameLogic.Position;
-import gameLogic.Snake;
-import gameLogic.Square;
+import snaykuu.gameLogic.Brain;
+import snaykuu.gameLogic.Direction;
+import snaykuu.gameLogic.GameState;
+import snaykuu.gameLogic.Position;
+import snaykuu.gameLogic.Snake;
+import snaykuu.gameLogic.Square;
 
 /**
  * An awesome bot for the engine/API Snaykuu called Anna.

@@ -1,10 +1,10 @@
-package userInterface;
+package snaykuu.userInterface;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 import java.util.Map;
 import java.util.Random;
 

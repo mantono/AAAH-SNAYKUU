@@ -1,9 +1,9 @@
-package userInterface;
+package snaykuu.userInterface;
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import gameLogic.*;
+import snaykuu.gameLogic.*;
 
 public class ReplayWindow extends JFrame
 {
