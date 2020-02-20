@@ -10,7 +10,7 @@ defaultTasks 'run'
 
 task run(type: JavaExec) {
     main = 'Main'
-    //classpath = sourceSets.main.runtimeClasspath
+    classpath = sourceSets.main.runtimeClasspath
     //classpath += files('bots')
 }
 
