@@ -1,7 +1,5 @@
 package snaykuu.gameLogic;
 
-import snaykuu.gameLogic.snaykuu.Board;
-
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
@@ -23,9 +21,9 @@ public class GameState
 	private Set<Snake> snakes;
 	private Metadata metadata;
 	
-	GameState(snaykuu.gameLogic.snaykuu.Board currentBoard, Set<Snake> snakes, Metadata metadata, ErrorState errorState)
+	GameState(Board currentBoard, Set<Snake> snakes, Metadata metadata, ErrorState errorState)
 	{
-		board = new snaykuu.gameLogic.snaykuu.Board(currentBoard);
+		board = currentBoard.copy(currentBoard.getWidth(), currentBoard.getHeight());
 		this.snakes = new HashSet<Snake>(snakes);
 		this.metadata = metadata;
 		this.errorState = errorState;
@@ -46,7 +44,7 @@ public class GameState
 	 * Returns a Board object, which constists of a 2D-array of Square objects.
 	 *
 	 * @return 	A representation of the current game board.
-	 * @see        snaykuu.gameLogic.snaykuu.Board
+	 * @see        snaykuu.gameLogic.Board
 	 */
 	public Board getBoard()
 	{
@@ -94,7 +92,7 @@ public class GameState
 	{
 		Position currentHeadPosition = snake.getHeadPosition();
 		Position nextHeadPosition = calculateNextPosition(dir, currentHeadPosition);
-		return (board.getSquare(nextHeadPosition).isLethal());
+		return (board.isLethal(nextHeadPosition));
 	}
 	
 	/**

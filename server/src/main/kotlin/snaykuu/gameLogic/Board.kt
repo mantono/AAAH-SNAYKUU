@@ -26,7 +26,7 @@ data class Board(private val width: Int, private val height: Int) {
      * Returns whether or not the board contains any game object at the given position.
      * Doesn't perform any checks on what type of object it is, like if it is lethal or not.
      *
-     * @param	p	The position we want to check for game objects.
+     * @param	position The position we want to check for game objects.
      * @return	Whether or not the board contains a game object at the given position.
      */
     fun hasGameObject(position: Position): Boolean = !getSquare(position).isEmpty()
@@ -34,7 +34,7 @@ data class Board(private val width: Int, private val height: Int) {
     /**
      * Returns whether or not the board contains a fruit at the given position.
      *
-     * @param	p	The position we want to check for fruit.
+     * @param	position The position we want to check for fruit.
      * @return	Whether or not the board contains a fruit at the given position.
      */
     fun hasFruit(position: Position): Boolean = getSquare(position).hasFruit()
@@ -42,7 +42,7 @@ data class Board(private val width: Int, private val height: Int) {
     /**
      * Returns whether or not the board contains a wall at the given position.
      *
-     * @param	p	The position we want to check for walls.
+     * @param	position The position we want to check for walls.
      * @return	Whether or not the board contains a wall at the given position.
      */
     fun hasWall(position: Position): Boolean = getSquare(position).hasWall()
@@ -50,7 +50,7 @@ data class Board(private val width: Int, private val height: Int) {
     /**
      * Returns whether or not the board contains a snake at the given position.
      *
-     * @param	p	The position we want to check for snakes.
+     * @param	position The position we want to check for snakes.
      * @return	Whether or not the board contains a snake at the given position.
      * @see		Square
      */
@@ -59,7 +59,7 @@ data class Board(private val width: Int, private val height: Int) {
     /**
      * Returns whether or not the board contains a lethal game object at the given position.
      *
-     * @param	p	The position we want to check for lethal objects.
+     * @param	position The position we want to check for lethal objects.
      * @return	Whether or not the board contains a lethal game object at the given position.
      * @see		Square
      */
@@ -104,7 +104,7 @@ data class Board(private val width: Int, private val height: Int) {
             .any { it.hasSnake() || it.hasWall() }
     }
 
-    internal fun addGameObject(obj: GameObject, position: Position) {
+    fun addGameObject(obj: GameObject, position: Position) {
         board[position] = obj
     }
 
@@ -112,12 +112,12 @@ data class Board(private val width: Int, private val height: Int) {
         board[index(position)] = 0
     }
 
-    internal fun removeGameObject(obj: GameObject, position: Position) {
+    fun removeGameObject(obj: GameObject, position: Position) {
         board[position] -= obj
     }
 
     internal fun removeFruit(position: Position) {
-        board[position] -= GameObject.Fruit
+        board[position] -= Fruit
     }
 
     internal operator fun Array<Int>.get(position: Position): Int {

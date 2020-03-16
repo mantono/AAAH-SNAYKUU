@@ -6,11 +6,10 @@ import java.awt.*;
 import java.awt.event.*;
 import snaykuu.gameLogic.*;
 import javax.swing.filechooser.*;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 import java.io.*;
+import java.util.List;
+
 import static java.awt.GridBagConstraints.*;
 
 class SnakeSettingsPanel extends JPanel
@@ -20,7 +19,7 @@ class SnakeSettingsPanel extends JPanel
 	private JButton addSnakeButton;
 	private JButton removeSnakeButton;
 	private JButton reloadAllBrainsButton;
-	private Map<String, String> snakes = new TreeMap<String, String>();
+	private NavigableMap<String, String> snakes = new TreeMap<String, String>();
 	private Map<String, Class<? extends Brain>> brains = new TreeMap<String, Class<? extends Brain>>();
 	
 	public SnakeSettingsPanel()

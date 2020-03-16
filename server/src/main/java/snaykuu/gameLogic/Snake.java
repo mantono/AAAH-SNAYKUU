@@ -20,7 +20,7 @@ import java.awt.Color;
 
 public class Snake implements GameObject, Serializable
 {
-    private int id;
+	private int id;
 	private String name;
 	private Brain brain;
 	private LinkedList<Position> segments;

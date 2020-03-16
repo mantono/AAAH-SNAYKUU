@@ -1,6 +1,6 @@
 package snaykuu.gameLogic;
 
-import snaykuu.gameLogic.snaykuu.Board;
+import snaykuu.gameLogic.Board;
 
 import java.io.*;
 import java.util.LinkedList;

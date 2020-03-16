@@ -4,9 +4,13 @@ end_of_line=lf
 insert_final_newline=false
 indent_style=space
 indent_size=4
+trim_trailing_whitespace=true
+
+[*.java]
+indent_style=tab
 
 [*.kt]
-trim_trailing_whitespace=true
+indent_style=space
 
 [{*.yml,*.yaml}]
 indent_style=space

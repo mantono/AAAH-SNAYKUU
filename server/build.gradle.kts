@@ -13,7 +13,7 @@ plugins {
 }
 
 application {
-    mainClassName = "MainKt"
+    mainClassName = "snaykuu.Main"
 }
 
 group = "snaykuu"
