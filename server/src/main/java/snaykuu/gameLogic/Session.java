@@ -311,9 +311,9 @@ public class Session implements Game
 				continue;
 
 			Position head = snake.getHeadPosition();
-			int square = board.getSquare(head);
+			Square square = board.getSquare(head);
 
-			if (SquareKt.hasWall(square) || SquareKt.hasMultipleSnakes(square))
+			if (square.hasWall() || square.hasMultipleSnakes())
 			{
 				snake.kill();
 				continue;
@@ -321,9 +321,9 @@ public class Session implements Game
 			else
 				snake.increaseLifespan();
 
-			if (SquareKt.hasFruit(square))
+			if (square.hasFruit())
 			{
-				int fruitValue = SquareKt.eatFruit(square);
+				int fruitValue = square.eatFruit();
 				snake.addScore(fruitValue);
 			}
 		}

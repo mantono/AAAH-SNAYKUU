@@ -65,7 +65,7 @@ data class Board(private val width: Int, private val height: Int) {
      */
     fun isLethal(position: Position): Boolean = getSquare(position).isLethal()
 
-    fun getSquare(position: Position): Int = board[position]
+    fun getSquare(position: Position): Square = board[position]
 
     /**
      * Calculates whether or not the board contains a lethal object within a given radius of
@@ -120,9 +120,9 @@ data class Board(private val width: Int, private val height: Int) {
         board[position] -= Fruit
     }
 
-    internal operator fun Array<Int>.get(position: Position): Int {
+    internal operator fun Array<Int>.get(position: Position): Square {
         val index: Int = index(position)
-        return board[index]
+        return Square(board[index])
     }
 
     internal operator fun Array<Int>.set(position: Position, obj: GameObject) {
