@@ -8,7 +8,7 @@ fun projectName(): String = project.name.replace("{", "").replace("}", "")
 
 plugins {
     id("application") apply true
-    id("org.jetbrains.kotlin.jvm") version "1.3.50" apply true
+    id("org.jetbrains.kotlin.jvm") version "1.3.70" apply true
     id("java") apply true
 }
 
@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin", "kotlin-stdlib-jdk8", "1.3.61")
+    implementation("org.jetbrains.kotlin", "kotlin-stdlib-jdk8", "1.3.70")
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8", "1.3.3")
 
     // Logging
