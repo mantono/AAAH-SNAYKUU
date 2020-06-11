@@ -101,7 +101,7 @@ data class Board(private val width: Int, private val height: Int) {
     private fun containsLethalObject(positions: Set<Position>): Boolean {
         return positions.asSequence()
             .map { getSquare(it) }
-            .any { it.hasSnake() || it.hasWall() }
+            .any { it.isLethal() }
     }
 
     fun addGameObject(obj: GameObject, position: Position) {

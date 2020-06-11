@@ -16,7 +16,7 @@ import java.util.*
  * @author	Sixten Hilborn
  * @author	Arian Jafari
  */
-data class Snake(
+data class Snake @JvmOverloads constructor(
     private val id: Int,
     private val name: String,
     private val brain: Brain,
@@ -98,24 +98,24 @@ data class Snake(
 
     override fun toString(): String = name
 
-    internal fun placeOnBoard(segments: Deque<Position>, originalDirection: Direction): Snake {
+    protected fun placeOnBoard(segments: Deque<Position>, originalDirection: Direction): Snake {
         val newDirections: List<SnakeSegment> = segments.map { SnakeSegment(it, originalDirection) }
         return this.copy(segments = segments, directionLog = directionLog.append(newDirections))
     }
 
-    internal fun moveHead(dir: Direction): Snake {
+    protected fun moveHead(dir: Direction): Snake {
         val pos: Position = dir.calculateNextPosition(getHeadPosition())
         return this.copy(segments = segments.append(pos), directionLog = directionLog.append(SnakeSegment(pos, dir)))
     }
 
-    internal fun removeTail(): Snake {
+    protected fun removeTail(): Snake {
         return this.copy(directionLog = directionLog.also { it.removeLast() })
     }
 
-    internal fun kill(): Snake = this.copy(isDead = true)
+    protected fun kill(): Snake = this.copy(isDead = true)
     internal fun getBrain(): Brain = brain
-    internal fun addScore(points: Int): Snake = this.copy(score = score + points)
-    internal fun increaseLifespan(): Snake = this.copy(lifespan = lifespan + 1)
+    protected fun addScore(points: Int): Snake = this.copy(score = score + points)
+    protected fun increaseLifespan(): Snake = this.copy(lifespan = lifespan + 1)
     internal fun removeBrain(): Snake = this.copy(brain = BrainDead)
     fun getColor(): Color = color
     fun getName(): String = name

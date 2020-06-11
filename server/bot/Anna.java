@@ -1,18 +1,16 @@
-package bot;
+package snaykuu.bot;
+
+import snaykuu.gameLogic.*;
 
 import java.text.DecimalFormat;
-import java.util.*;
-
-import snaykuu.gameLogic.Brain;
-import snaykuu.gameLogic.Direction;
-import snaykuu.gameLogic.GameState;
-import snaykuu.gameLogic.Position;
-import snaykuu.gameLogic.Snake;
-import snaykuu.gameLogic.Square;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * An awesome bot for the engine/API Snaykuu called Anna.
- * 
+ *
  * @author	Marcus Hansson
  * @version 1.0
  */
@@ -25,38 +23,38 @@ public class Anna implements Brain {
 	private int turnsUntilTailGrowth;
 	private int stepsInTrail = 5;
 	final double maximumFruitRisk = 0.98;
-	
+
 	public Direction getNextMove(Snake snake, GameState gameState) {
 		this.gameState = gameState;
 		this.snake = snake;
-		
+
 		int maxThinkingTime = gameState.getMetadata().getMaximumThinkingTime();
 		double minPercentage = 0.2;
 		double maxPercentage = 0.7;
 		int maxStepsInTrail = 10;
-		
+
 		long startTime = System.currentTimeMillis();
-		
+
 		Direction d = main();
-		
+
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;
-		
+
 		if (totalTime > maxThinkingTime * maxPercentage) {
 			stepsInTrail--;
 		} else if (totalTime < maxThinkingTime * minPercentage) {
 			stepsInTrail++;
 		}
-		
+
 		if (stepsInTrail > maxStepsInTrail) {
 			stepsInTrail = maxStepsInTrail;
 		}
-		
+
 		return d;
 
-		
+
 	}
-	
+
 	public Direction main() {
 		int closestCompetitorDistance = Integer.MAX_VALUE;
 		int distanceToFruit = Integer.MAX_VALUE;
@@ -131,7 +129,7 @@ public class Anna implements Brain {
 
 			if (distanceToFruit <= closestCompetitorDistance) {
 				smallestFruitRisk = maximumFruitRisk;
-				
+
 				fruitDirs.addAll(GameState.getRelativeDirections(headPos, fruit));
 
 				for (Direction fruitDir : fruitDirs) {
@@ -152,14 +150,14 @@ public class Anna implements Brain {
 		}
 
 		printInfo(headPos, leftTrail, forwardTrail, rightTrail);
-		
+
 		return chosenDir;
 	}
-	
+
 	/**
 	 * Prints information about the trail risks and the chosen direction to the
 	 * console.
-	 * 
+	 *
 	 * @param headPos 		this head position
 	 * @param leftTrail 	trail when turning left
 	 * @param forwardTrail	trail when not turning
@@ -168,28 +166,28 @@ public class Anna implements Brain {
 	public void printInfo(Position headPos, Trail leftTrail, Trail forwardTrail,
 						  Trail rightTrail) {
 		final DecimalFormat df = new DecimalFormat("#%");
-		
+
 		System.out.println("Where should I turn??");
 		System.out.println("Current position: " + headPos);
 		System.out.println("Left risk: " + df.format(leftTrail.getRisk()));
 		System.out.println("Forward risk: " + df.format(forwardTrail.getRisk()));
 		System.out.println("Right risk: " + df.format(rightTrail.getRisk()));
-		System.out.println("I am going " + chosenDir + " to " 
+		System.out.println("I am going " + chosenDir + " to "
 				+ GameState.calculateNextPosition(chosenDir, headPos));
 		System.out.println();
 	}
 
-	
+
 	/**
-	 * Sorts all the visible fruits on the game board by the distance to this 
+	 * Sorts all the visible fruits on the game board by the distance to this
 	 * bot's head, with the closest fruit first.
-	 * 
+	 *
 	 * @param fruits 	all visible fruits on the game board
 	 * @param headPos 	the bot's head position
 	 */
 	public void sortFruitsByDistance(List<Position> fruits, Position headPos) {
 		Collections.sort(fruits, new Comparator<Position>() {
-			
+
 			@Override
 			public int compare(Position o1, Position o2) {
 				return o1.getDistanceTo(headPos) - o2.getDistanceTo(headPos);
@@ -198,8 +196,8 @@ public class Anna implements Brain {
 	}
 
 	/**
-	 * Add all living snakes, which are not this bot, to the list 
-	 * {@link #otherLivingSnakes} class. 
+	 * Add all living snakes, which are not this bot, to the list
+	 * {@link #otherLivingSnakes} class.
 	 */
 	public void setOtherLivingSnakes() {
 		for (Snake otherSnake : gameState.getSnakes()) {
@@ -214,8 +212,8 @@ public class Anna implements Brain {
 	/**
 	 * Calculates the number of turns that must pass until all the tails of the
 	 * snakes will grow one length unit.
-	 * 
-	 * @param numberOfRounds 	the number of rounds that has lasted i.e. the 
+	 *
+	 * @param numberOfRounds 	the number of rounds that has lasted i.e. the
 	 * 							amount of steps that this bot has taken
 	 * @param growthFrequency 	the number of turns it takes for snakes to grow
 	 * @return					the number of turns until tail growth
@@ -226,7 +224,7 @@ public class Anna implements Brain {
 
 	/**
 	 * Checks if a trail is safe enough to take.
-	 *  
+	 *
 	 * @param trail the trail to be examined
 	 * @return 		the current safest direction, that has been examined
 	 */
@@ -238,12 +236,12 @@ public class Anna implements Brain {
 
 		return chosenDir;
 	}
- 
+
 	/**
 	 * Finds the direction with the smallest risk for this bot to take.
-	 * 
+	 *
 	 * @param leftTrail 	the trail taken when this bot go left next move
-	 * @param forwardTrail 	the trail taken when this bot go forward next move 
+	 * @param forwardTrail 	the trail taken when this bot go forward next move
 	 * @param rightTrail	the trail taken when this bot go right next move
 	 * @return				the direction with the smallest risk
 	 */
@@ -279,12 +277,12 @@ public class Anna implements Brain {
 		}
 		return risk;
 	}
-	
+
 	/**
 	 * Calculates the total risk of taking all possible trails with a set amount
 	 * of trail steps.
-	 * 
-	 * @param trails		
+	 *
+	 * @param trails
 	 * @param trailSteps
 	 * @return
 	 */
@@ -302,7 +300,7 @@ public class Anna implements Brain {
 			int turnsUntilSquareNotLeathal = Integer.MAX_VALUE;
 
 			Square square;
-			
+
 			final Position squarePos = trail.getEndOfTrail();
 			final List<Position> squarePositions = trail.getTrailPositions();
 
@@ -317,7 +315,7 @@ public class Anna implements Brain {
 				continue;
 			}
 
-			for (Snake otherSnake : square.getSnakes()) {
+			for (Snake otherSnake : square.getSnakes(gameState)) {
 				if (otherLivingSnakes.contains(otherSnake)) {
 					final List<Position> segments = otherSnake.getSegments();
 
@@ -326,7 +324,7 @@ public class Anna implements Brain {
 
 						if (segmentPos.equals(squarePos)) {
 							turnsUntilSquareNotLeathal = i;
-							
+
 							if (turnsUntilSquareNotLeathal == segments.size()) {
 								if (trailSteps == 0) {
 									totalRiskOfDeath = 1;
@@ -344,7 +342,7 @@ public class Anna implements Brain {
 
 			if (!square.isLethal()) {
 				// Snake is able to collide with itself.
-				if (squarePositions.size() >= 5) { 
+				if (squarePositions.size() >= 5) {
 					for (int steps = 0; steps < squarePositions.size() - 4; steps++) {
 						if (squarePositions.get(steps).equals(squarePos)
 								&& snake.getSegments().size() >= squarePositions.size() - steps) {
@@ -377,7 +375,7 @@ public class Anna implements Brain {
 					trailPositionsCopy.add(neighbour);
 					Trail newTrail = new Trail(trailPositionsCopy, neighbourDir, 0.0);
 					newTrails.add(newTrail);
-				} 
+				}
 			}
 
 			trails.addAll(newTrails);
@@ -391,7 +389,7 @@ public class Anna implements Brain {
 
 	public Direction findNeighbourDir(int k) {
 		Direction neighbourDir = null;
-		
+
 		switch (k) {
 		case 0:
 			neighbourDir = Direction.SOUTH;
@@ -415,7 +413,7 @@ public class Anna implements Brain {
 		private Direction endOfTrailDir;
 		private double risk;
 
-		Trail(List<Position> trailPositions, Direction endOfTrailDir, 
+		Trail(List<Position> trailPositions, Direction endOfTrailDir,
 			  double risk) {
 			this.trailPositions = trailPositions;
 			this.endOfTrail = trailPositions.get(trailPositions.size() - 1);

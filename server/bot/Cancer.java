@@ -1,4 +1,4 @@
-package bot;
+package snaykuu.bot;
 
 import snaykuu.gameLogic.*;
 import java.util.List;
