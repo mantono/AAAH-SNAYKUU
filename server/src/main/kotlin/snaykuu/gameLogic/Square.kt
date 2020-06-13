@@ -19,7 +19,7 @@ data class Square(private val value: Int = 0) {
     fun hasSnake(): Boolean = value shr 2 != 0
     fun hasMultipleSnakes(): Boolean = snakeValues().size > 1
     fun isLethal(): Boolean = value shr 1 != 0
-    fun eatFruit(): Int = value and Fruit.value()
+    internal fun hasSnakeEatingFruit(): Boolean = hasFruit() && hasSnake() && !hasMultipleSnakes()
 
     internal fun Square.snakeValues(): List<Int> {
         val snakeBitIdRange: IntRange = 3..32

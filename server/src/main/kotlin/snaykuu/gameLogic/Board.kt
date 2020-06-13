@@ -10,13 +10,17 @@ import java.util.*
  * @author	Arian Jafari
  * @see		Square
  */
-data class Board(private val width: Int, private val height: Int) {
-
-    private val board: Array<Int> = Array(width * height) { 0 }
+class Board private constructor(
+    private val width: Int,
+    private val height: Int,
+    private val board: List<Int>
+): Iterable<Pair<Position, Square>> {
+    constructor(width: Int, height: Int): this(width, height, createBoard(width, height))
 
     init {
-        require(width >= 1) { "Width must be at least 1" }
-        require(height >= 1) { "Height must be at least 1" }
+        require(width >= MIN_SIZE) { "Width must be at least $MIN_SIZE (including walls)" }
+        require(height >= MIN_SIZE) { "Height must be at least $MIN_SIZE (including walls)" }
+        require(width * height == board.size)
     }
 
     fun getWidth(): Int = width
@@ -104,30 +108,114 @@ data class Board(private val width: Int, private val height: Int) {
             .any { it.isLethal() }
     }
 
-    fun addGameObject(obj: GameObject, position: Position) {
-        board[position] = obj
+    internal fun removeFruit(position: Position): Board {
+        return modify(position) { current: Int -> current - Fruit.value() }
     }
 
-    internal fun clearSquare(position: Position) {
-        board[index(position)] = 0
+    internal fun add(position: Position, obj: GameObject): Board {
+        return modify(position) { it + obj.value() }
     }
 
-    fun removeGameObject(obj: GameObject, position: Position) {
-        board[position] -= obj
+    internal fun clearSquare(position: Position): Board {
+        return modify(position) { 0 }
     }
 
-    internal fun removeFruit(position: Position) {
-        board[position] -= Fruit
+    internal fun remove(position: Position, obj: GameObject): Board {
+        return modify(position) { current: Int -> current - obj.value() }
     }
 
-    internal operator fun Array<Int>.get(position: Position): Square {
+    internal fun removeAll(positions: List<Position>, obj: GameObject): Board {
+        return modify(positions) { current: Int -> current - obj.value() }
+    }
+
+    private fun set(position: Position, newValue: Int): Board {
+        val updatedBoard: List<Int> = board.replace(index(position), newValue)
+        return Board(width, height, updatedBoard)
+    }
+
+    private inline fun modify(
+        position: Position,
+        modify: (current: Int) -> Int
+    ): Board {
+        val currentValue: Int = board[position].toInt()
+        val newValue: Int = modify(currentValue)
+        return if(newValue != currentValue) {
+            val updatedBoard: List<Int> = board.replace(index(position), newValue)
+            return Board(width, height, updatedBoard)
+        } else {
+            this
+        }
+    }
+
+    private inline fun modify(
+        positions: List<Position>,
+        crossinline modify: (current: Int) -> Int
+    ): Board {
+        val changes: Map<Int, Int> = positions
+            .asSequence()
+            .map { index(it) to board[it] }
+            .map { it.first to modify(it.second.toInt()) }
+            .toMap()
+
+        val updatedBoard: List<Int> = board.replace(changes)
+        return Board(width, height, updatedBoard)
+    }
+
+    override fun iterator(): Iterator<Pair<Position, Square>> = this.board
+        .asSequence()
+        .mapIndexed { i: Int, value: Int -> Position(i % width, i / height) to Square(value) }
+        .iterator()
+
+    internal fun squares(): Sequence<Square> = this.board.asSequence().map { Square(it) }
+
+    internal fun positions(): Sequence<Position> = this.board
+        .asSequence()
+        .map { i -> Position(i % width, i / height) }
+
+    internal operator fun List<Int>.get(position: Position): Square {
         val index: Int = index(position)
         return Square(board[index])
     }
 
-    internal operator fun Array<Int>.set(position: Position, obj: GameObject) {
-        board[position] += obj
-    }
-
     private fun index(position: Position): Int = (position.y * width) + position.x
+
+    companion object {
+        private const val MIN_SIZE: Int = 3
+
+        private fun createBoard(width: Int, height: Int): List<Int> {
+            val board = Array(width * height) { 0 }
+            addWalls(board, width, height)
+            return board.toList()
+        }
+
+        private fun addWalls(board: Array<Int>, width: Int, height: Int) {
+            board.asSequence()
+                .filter { i ->
+                    when {
+                        // North wall
+                        i < width -> true
+                        // South wall
+                        i > width * (height - 1) -> true
+                        // West wall
+                        i % width == 0 -> true
+                        // East wall
+                        i % width == (width - 1) -> true
+                        else -> false
+                    }
+                }
+                .forEach { i: Int -> board[i] = Wall.value() }
+        }
+    }
+}
+
+private fun List<Int>.replace(i: Int, value: Int): List<Int> {
+    val list = this.toMutableList()
+    list[i] = value
+    return list
+}
+
+private fun List<Int>.replace(changes: Map<Int, Int>): List<Int> {
+    val list = this.toMutableList()
+    changes.forEach { (i, value) -> list[i] = value }
+    return list
 }

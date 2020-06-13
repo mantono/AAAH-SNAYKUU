@@ -103,19 +103,19 @@ data class Snake @JvmOverloads constructor(
         return this.copy(segments = segments, directionLog = directionLog.append(newDirections))
     }
 
-    protected fun moveHead(dir: Direction): Snake {
+    internal fun moveHead(dir: Direction): Snake {
         val pos: Position = dir.calculateNextPosition(getHeadPosition())
         return this.copy(segments = segments.append(pos), directionLog = directionLog.append(SnakeSegment(pos, dir)))
     }
 
-    protected fun removeTail(): Snake {
+    internal fun removeTail(): Snake {
         return this.copy(directionLog = directionLog.also { it.removeLast() })
     }
 
-    protected fun kill(): Snake = this.copy(isDead = true)
+    internal fun kill(): Snake = this.copy(isDead = true)
     internal fun getBrain(): Brain = brain
-    protected fun addScore(points: Int): Snake = this.copy(score = score + points)
-    protected fun increaseLifespan(): Snake = this.copy(lifespan = lifespan + 1)
+    internal fun addScore(): Snake = this.copy(score = score + 1)
+    internal fun increaseLifespan(): Snake = this.copy(lifespan = lifespan + 1)
     internal fun removeBrain(): Snake = this.copy(brain = BrainDead)
     fun getColor(): Color = color
     fun getName(): String = name
