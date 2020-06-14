@@ -10,10 +10,10 @@ class Session(
     private val board: Board,
     private val metadata: Metadata,
     private val snakes: Set<Snake> = HashSet(16),
-    private val snakeErrors: Map<Snake, ErrorState> = HashMap(16)
+    private val recordedGame: GameRecorder = GameRecorder(metadata),
+    private val random: Random = Random(),
+    private val turn: Int = 0
 ): Game {
-    private val random: Random = Random()
-    private var recordedGame: RecordedGame? = null
 
     init {
         perhapsSpawnFruint()
@@ -35,7 +35,7 @@ class Session(
 
     fun prepareForStart() {
         placeSnakesOnBoard()
-        recordedGame = RecordedGame(metadata, board, snakes)
+        recordedGame.start()
     }
 
     /**
@@ -64,28 +64,30 @@ class Session(
      */
     override fun tick(): Game {
         check(!hasEnded()) { "Game has ended" }
-        val growth: Boolean = checkForGrowth()
+        val growth: Boolean = growSnakes()
+
+        // Ask snake brains what moves they would like to do
         val moves: Map<Snake, Direction> = getDecisionsFromSnakes()
-        val updatedBoard: Board = updateBoardState(snakes, moves, board)
+
+        // Update board and apply snake moves
+        val (updatedBoard: Board, updatedSnakes: Set<Snake>) = updateBoardState(snakes, moves, board)
+
+        // Add new fruits to board (when needed)
         val boardWithNewFruit: Board = perhapsSpawnFruit(updatedBoard)
-        val updatedSnakeState: Set<Snake> = updateSnakeStates(snakes, board)
-        val frame = Frame(board, snakes)
-        recordedGame!!.addFrame(frame)
-        return Session(boardWithNewFruit, metadata, updatedSnakeState)
+
+        recordedGame.addBlocking(boardWithNewFruit)
+        return Session(boardWithNewFruit, metadata, updatedSnakes, recordedGame, random, turn + 1)
     }
 
     fun cleanup() {
         snakes.forEach { it.removeBrain() }
     }
 
-    private fun checkForGrowth(): Boolean {
-        val timeTillGrowth: Int = recordedGame!!.turnCount % metadata.growthFrequency
-        return timeTillGrowth == 0
-    }
+    private fun growSnakes(): Boolean = turn % metadata.growthFrequency == 0
+    private fun spawnFruit(): Boolean = turn % metadata.fruitFrequency == 0
 
     private fun perhapsSpawnFruit(board: Board): Board {
-        val timeTillFruitSpawn = recordedGame!!.turnCount % metadata.fruitFrequency
-        if(timeTillFruitSpawn != 0) {
+        if(!spawnFruit()) {
             return board
         }
         val (position, _) = board.asSequence()
@@ -132,10 +134,10 @@ class Session(
             .toMap()
     }
 
-    fun parseMove(snake: Snake, decision: BrainDecision): Outcome {
+    private fun parseMove(snake: Snake, decision: BrainDecision): Outcome {
         return try {
             val move: Direction = decision.demandNextMove()
-            return if(isValidTurn(snake.getCurrentDirection(), move)) {
+            return if(snake.getCurrentDirection().isValidTurn(move)) {
                 ValidMove(move)
             } else {
                 InvalidMove
@@ -149,27 +151,14 @@ class Session(
         }
     }
 
-    // TODO: Make extension function on Direction
-    /**
-     * Checks that moving in a given direction is valid, e g that the snake
-     * doesn't attempt to turn 180 degrees.
-     *
-     * @param	current	The current direction of the snake.
-     * @param	next    The direction in which the snake is attempting to move.
-     * @return	<code>true</code> if the attempted move is valid, <code>false</code> if not.
-     */
-    private fun isValidTurn(current: Direction, next: Direction): Boolean =
-        current == next || (current.ordinal xor next.ordinal) % 2 != 0
-
     /**
      * Moves all the snakes by calling the <code>moveSnake</code> for each snake.
      *
      * @param	moves		Map of each snake to its desired movement.
      * @param	growSnakes	Whether or not snakes are supposed to grow this turn.
      */
-    private fun moveAllSnakes(moves: Map<Snake, Direction>, growSnakes: Boolean): Pair<Board, Set<Snakes>> {
-        moves.forEach { (snake, dir) -> moveSnake(snake, dir, growSnakes) }
-    }
+    private fun moveAllSnakes(moves: Map<Snake, Direction>, growSnakes: Boolean): Set<Snake> =
+        moves.map { moveSnake(it.key, it.value, growSnakes) }.toSet()
 
     /**
      * Moves a single snake in the specified direction and grows the snake if necessary.
@@ -180,12 +169,11 @@ class Session(
      * @param	dir		The direction in which the snake is to be moved.
      * @param	grow	Whether or not the snake is supposed to grow this turn.
      */
-    private fun moveSnake(snake: Snake, dir: Direction, grow: Boolean): Board {
-        val updatedBoard: Board = board.add(snake.moveHead(dir).getHeadPosition(), snake)
-        return if(!grow) {
-            updatedBoard.remove(snake.getTailPosition(), snake)
+    private fun moveSnake(snake: Snake, dir: Direction, grow: Boolean): Snake {
+        return if(grow) {
+            snake.moveHead(dir)
         } else {
-            updatedBoard
+            snake.moveHead(dir).removeTail()
         }
     }
     /**
@@ -213,27 +201,29 @@ class Session(
         snakes: Collection<Snake>,
         moves: Map<Snake, Direction>,
         board: Board
-    ): Board {
+    ): Pair<Board, Set<Snake>> {
         val eatenFruits: List<Position> = board.asSequence()
             .filter { it.second.hasSnakeEatingFruit() }
             .map { it.first }
             .toList()
 
-        val movedSnakeHeads: List<Position> = snakes.asSequence()
-            .map { snake -> snake.moveHead(snake.getCurrentDirection()) }
+        val movedSnakes: Set<Snake> = moveAllSnakes(moves, growSnakes())
+        val updatedSnakeState: Set<Snake> = updateSnakeStates(movedSnakes, board)
+        val allSnakes: Set<Snake> = (snakes + updatedSnakeState).asSequence().onlyLatestSnakes()
+        val snakesWithPositions: Map<GameObject, List<Position>> = allSnakes.asSequence()
+            .map { it to it.getSegments().toList() }
+            .toMap()
+
+        val updatedBoard: Board = board
+            .removeAllSnakes()
+            .removeAll(eatenFruits, Fruit)
+            .addAll(snakesWithPositions)
+
+        return updatedBoard to allSnakes
     }
 }
 
-sealed class Outcome {
-    fun validMoveOr(direction: Direction): Direction {
-        return when(this) {
-            is ValidMove -> this.move
-            else -> direction
-        }
-    }
-}
-class ValidMove(val move: Direction): Outcome()
-object InvalidMove: Outcome()
-object NotStarted: Outcome()
-class ThrewException(val exception: Throwable): Outcome()
-object TimeOut: Outcome()
+private fun Sequence<Snake>.onlyLatestSnakes(): Set<Snake> = this
+    .sortedByDescending { it.getLifespan() }
+    .distinctBy { it.value() }
+    .toSet()

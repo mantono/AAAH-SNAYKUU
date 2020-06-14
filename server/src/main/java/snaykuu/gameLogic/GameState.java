@@ -198,24 +198,4 @@ public class GameState
 
 		return directions;
 	}
-
-	/**
-	 * This method can be used to calculate the distance between two positions.
-	 *
-	 * @param 	from		The position from which you wish to calculate the distance.
-	 * @param	to		The position to which you wish to calculate the distance.
-	 * @return	An integer representing the distance between two positions.
-	 */
-	public static int distanceBetween(Position from, Position to)
-	{
-		int distance = 0;
-
-		// Calculate distance in the x-axis
-		distance += Math.abs(from.getX() - to.getX());
-
-		// Calculate distance in the y-axis
-		distance += Math.abs(from.getY() - to.getY());
-
-		return distance;
-	}
 }

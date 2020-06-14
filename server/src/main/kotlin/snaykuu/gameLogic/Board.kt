@@ -1,6 +1,7 @@
 package snaykuu.gameLogic
 
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * This class represents the entire game board through a 2D-array of Square objects.
@@ -13,14 +14,14 @@ import java.util.*
 class Board private constructor(
     private val width: Int,
     private val height: Int,
-    private val board: List<Int>
+    private val squares: List<Int>
 ): Iterable<Pair<Position, Square>> {
     constructor(width: Int, height: Int): this(width, height, createBoard(width, height))
 
     init {
         require(width >= MIN_SIZE) { "Width must be at least $MIN_SIZE (including walls)" }
         require(height >= MIN_SIZE) { "Height must be at least $MIN_SIZE (including walls)" }
-        require(width * height == board.size)
+        require(width * height == squares.size)
     }
 
     fun getWidth(): Int = width
@@ -69,7 +70,7 @@ class Board private constructor(
      */
     fun isLethal(position: Position): Boolean = getSquare(position).isLethal()
 
-    fun getSquare(position: Position): Square = board[position]
+    fun getSquare(position: Position): Square = squares[position]
 
     /**
      * Calculates whether or not the board contains a lethal object within a given radius of
@@ -128,8 +129,21 @@ class Board private constructor(
         return modify(positions) { current: Int -> current - obj.value() }
     }
 
+    internal fun removeAllSnakes(): Board =
+        Board(width, height, squares.map { it and (Wall.value() + Fruit.value()) })
+
+    internal fun addAll(objects: Map<GameObject, List<Position>>): Board {
+        val copy: MutableList<Int> = ArrayList(squares)
+        objects.asSequence()
+            .map { it.value.map { pos -> pos to it.key.value() } }
+            .flatten()
+            .forEach { (position, value) -> copy[index(position)] += value }
+
+        return Board(width, height, copy)
+    }
+
     private fun set(position: Position, newValue: Int): Board {
-        val updatedBoard: List<Int> = board.replace(index(position), newValue)
+        val updatedBoard: List<Int> = squares.replace(index(position), newValue)
         return Board(width, height, updatedBoard)
     }
 
@@ -137,10 +151,10 @@ class Board private constructor(
         position: Position,
         modify: (current: Int) -> Int
     ): Board {
-        val currentValue: Int = board[position].toInt()
+        val currentValue: Int = squares[position].toInt()
         val newValue: Int = modify(currentValue)
         return if(newValue != currentValue) {
-            val updatedBoard: List<Int> = board.replace(index(position), newValue)
+            val updatedBoard: List<Int> = squares.replace(index(position), newValue)
             return Board(width, height, updatedBoard)
         } else {
             this
@@ -153,28 +167,30 @@ class Board private constructor(
     ): Board {
         val changes: Map<Int, Int> = positions
             .asSequence()
-            .map { index(it) to board[it] }
+            .map { index(it) to squares[it] }
             .map { it.first to modify(it.second.toInt()) }
             .toMap()
 
-        val updatedBoard: List<Int> = board.replace(changes)
+        val updatedBoard: List<Int> = squares.replace(changes)
         return Board(width, height, updatedBoard)
     }
 
-    override fun iterator(): Iterator<Pair<Position, Square>> = this.board
+    override fun iterator(): Iterator<Pair<Position, Square>> = this.squares
         .asSequence()
         .mapIndexed { i: Int, value: Int -> Position(i % width, i / height) to Square(value) }
         .iterator()
 
-    internal fun squares(): Sequence<Square> = this.board.asSequence().map { Square(it) }
+    internal fun serialize(): List<Int> = this.squares
 
-    internal fun positions(): Sequence<Position> = this.board
+    internal fun squares(): Sequence<Square> = this.squares.asSequence().map { Square(it) }
+
+    internal fun positions(): Sequence<Position> = this.squares
         .asSequence()
         .map { i -> Position(i % width, i / height) }
 
     internal operator fun List<Int>.get(position: Position): Square {
         val index: Int = index(position)
-        return Square(board[index])
+        return Square(squares[index])
     }
 
     private fun index(position: Position): Int = (position.y * width) + position.x

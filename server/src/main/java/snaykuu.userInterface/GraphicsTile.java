@@ -7,8 +7,6 @@ import java.awt.image.BufferedImage;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.net.URL;
-import snaykuu.gameLogic.Direction;
-import snaykuu.gameLogic.Position;
 
 enum GraphicsTile
 {
@@ -21,11 +19,11 @@ enum GraphicsTile
 	SNAKEDEAD("snake_dead.png"),
 	FRUIT("fruit.png"),
 	WALL("wall.png");
-	
+
 	private Image image;
 	private int imgHeight;
 	private int imgWidth;
-	
+
 	GraphicsTile(String s)
 	{
 		try
@@ -40,18 +38,18 @@ enum GraphicsTile
 			e.printStackTrace();
 		}
 	}
-	
+
 	Image getImage(Color c)
 	{
 		BufferedImage outImage = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_ARGB);
-		
+
 		Graphics2D g = outImage.createGraphics();
 		g.drawImage(image, 0, 0, null);
 		g.dispose();
-		
+
 		int mask = outImage.getRGB(imgWidth/2, imgHeight/2);
 		int replacement = c.getRGB();
-		
+
 		for (int i = 0; i < outImage.getWidth(); ++i)
 		{
 			for (int j = 0; j < outImage.getHeight(); ++j)
@@ -62,27 +60,27 @@ enum GraphicsTile
 				}
 			}
 		}
-		
+
 		return outImage;
-		
+
 	}
-	
+
 	Image getImage()
 	{
 		return image;
 	}
-	
+
 	AffineTransform getTransformation(Direction dir, Position pos, int pixelsPerXUnit, int pixelsPerYUnit)
 	{
-		
+
 		//~ See the java6 API spec for AffineTransform for details on syntax.
-		
+
 		float[] flatmatrix = {0.0f, 0.0f, 0.0f, 0.0f, (float)(pos.getX()), (float)(pos.getY())};
 		float[] translationCorrector = {0, 0};
 		float[] scaleAdjuster = {0, 0};
-		
-		
-		//~ Rotate around the image's own center and set a 
+
+
+		//~ Rotate around the image's own center and set a
 		//  few variables for later fine-tuning.
 		if(dir != null)
 		{
@@ -92,41 +90,41 @@ enum GraphicsTile
 					flatmatrix[1] += -1;
 					flatmatrix[2] += 1;
 					flatmatrix[5] += 1;
-					
+
 					scaleAdjuster[1] = 1;
 					break;
-					
+
 				case WEST:
 					flatmatrix[0] += -1;
 					flatmatrix[3] += -1;
 					flatmatrix[4] += 1;
 					flatmatrix[5] += 1;
-					
+
 					translationCorrector[1] = -1;
-					
+
 					scaleAdjuster[0] = 1;
 					break;
-					
+
 				case SOUTH:
 					flatmatrix[1] += 1;
 					flatmatrix[2] += -1;
 					flatmatrix[4] += 1;
-					
+
 					translationCorrector[0] = -1;
 					translationCorrector[1] = -1;
-					
+
 					scaleAdjuster[1] = 1;
 					break;
-					
+
 				default:
 					flatmatrix[0] += 1;
 					flatmatrix[3] += 1;
-					
+
 					translationCorrector[0] = -1;
-					
+
 					scaleAdjuster[0] = 1;
 					break;
-					
+
 			}
 		}
 		else
@@ -134,7 +132,7 @@ enum GraphicsTile
 			flatmatrix[0] += 1;
 			flatmatrix[3] += 1;
 		}
-		
+
 		//~ Scale the image according to current window size.
 		for(int i = 0; i < 4; ++i)
 		{
@@ -147,17 +145,17 @@ enum GraphicsTile
 				flatmatrix[i] = flatmatrix[i]*((pixelsPerYUnit+scaleAdjuster[1])/((float)imgHeight));
 			}
 		}
-		
+
 		//~ Translate to the correct point.
 		flatmatrix[4] = 1+flatmatrix[4]+flatmatrix[4]*pixelsPerXUnit;
 		flatmatrix[5] = 1+flatmatrix[5]+flatmatrix[5]*pixelsPerYUnit;
-		
-		
+
+
 		//~ Adjust for rotational positioning artifacts.
 		flatmatrix[4] += translationCorrector[0];
 		flatmatrix[5] += translationCorrector[1];
-		
+
 		return new AffineTransform(flatmatrix);
-		
+
 	}
 }
