@@ -29,6 +29,11 @@ data class Snake @JvmOverloads constructor(
 ): GameObject, Serializable {
 
     /**
+     * Get the size of the snake
+     */
+    val size: Int = segments.size
+
+    /**
      * Get a list of all the squares this snake has occupied.
      *
      * @return A list of the positions of the occupied squares.

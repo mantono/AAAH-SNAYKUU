@@ -9,20 +9,15 @@ public class GameResult
 {
 	private Set<Snake> snakes;
 	private Metadata metadata;
-	private RecordedGame recordedGame;
-	
-	public GameResult(Set<Snake> snakes, Metadata metadata, RecordedGame recordedGame)
+	private GameRecorder recorder;
+
+	public GameResult(Set<Snake> snakes, Metadata metadata, GameRecorder recorder)
 	{
-		this.metadata = metadata;		
+		this.metadata = metadata;
 		this.snakes = snakes;
-		this.recordedGame = recordedGame;
+		this.recorder = recorder;
 	}
-	
-	public RecordedGame getRecordedGame()
-	{
-		return recordedGame;
-	}
-	
+
 	public List<List<Snake>> getWinners()
 	{
 		ArrayList<List<Snake>> results = new ArrayList<List<Snake>>();
@@ -35,7 +30,7 @@ public class GameResult
 			{
 				Snake examinedSnake = results.get(index).get(0);
 				int comparisonResult = snakeComparator.compare(snake, examinedSnake);
-				
+
 				if (comparisonResult > 0)
 				{
 					break;
@@ -55,14 +50,14 @@ public class GameResult
 		}
 		return results;
 	}
-	
+
 	public String toString()
 	{
 		List<List<Snake>> winners = getWinners();
-		
+
 		int placement = 1;
 		String retVal = "";
-		
+
 		for (List<Snake> snakeList : winners)
 		{
 			retVal += (placement + ":");
@@ -72,10 +67,10 @@ public class GameResult
 				++placement;
 			}
 		}
-		
+
 		return retVal;
 	}
-	
+
 	private static class SnakeComparator implements Comparator<Snake>
 	{
 		public int compare(Snake first, Snake second)

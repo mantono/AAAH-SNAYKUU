@@ -7,21 +7,28 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.IntBuffer
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicReference
 
 class GameRecorder(
     private val metadata: Metadata
 ) {
     private var buffer: IntBuffer = IntBuffer.allocate(1)
     private val channel: Channel<Board> = Channel(100)
+    private val started: Semaphore = Semaphore(1)
 
-    fun start(scope: CoroutineScope = GlobalScope): Job {
-        return scope.launch { consume(this) }
+    fun start(scope: CoroutineScope = GlobalScope): Job? {
+        return if(started.tryAcquire()) {
+            scope.launch { consume(this) }
+        } else {
+            null
+        }
     }
 
     private suspend fun consume(scope: CoroutineScope) {

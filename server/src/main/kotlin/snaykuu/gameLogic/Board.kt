@@ -98,7 +98,7 @@ class Board private constructor(
             return
         }
         visited.add(from)
-        from.neighbours.asSequence()
+        from.getNeighbours().asSequence()
             .filter { !visited.contains(it) }
             .forEach { depthFirstSearch(it, visited, newRange) }
     }
@@ -140,6 +140,11 @@ class Board private constructor(
             .forEach { (position, value) -> copy[index(position)] += value }
 
         return Board(width, height, copy)
+    }
+
+    internal fun addSnake(snake: Snake): Board {
+        require(snake.size > 0) { "Cannot add an empty snake" }
+        return modify(snake.getSegments().toList()) { value: Int -> value + snake.value() }
     }
 
     private fun set(position: Position, newValue: Int): Board {

@@ -5,6 +5,9 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeoutException
 import kotlin.collections.HashSet
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 class Session(
     private val board: Board,
@@ -14,28 +17,96 @@ class Session(
     private val random: Random = Random(),
     private val turn: Int = 0
 ): Game {
-
-    init {
-        perhapsSpawnFruint()
-    }
-
     constructor(metadata: Metadata): this(Board(metadata.boardWidth, metadata.boardHeight), metadata)
 
     override fun getCurrentState(): GameState = GameState(board, snakes, metadata, NotStarted)
-
-    fun addSnake(newSnake: Snake) {
-        snakes.add(newSnake)
-    }
-
     override fun getGameResult(): GameResult = GameResult(snakes, metadata, recordedGame)
     override fun getMetadata(): Metadata = metadata
 
     fun getBoard(): Board = board
     fun getSnakes(): Set<Snake> = snakes
 
-    fun prepareForStart() {
-        placeSnakesOnBoard()
-        recordedGame.start()
+    fun prepareForStart(): Session {
+        return if(turn == 0) {
+            val (boardWithSnakes: Board, snakesWithBodies: Set<Snake>) = placeSnakesOnBoard(board, snakes)
+            recordedGame.start()
+            Session(boardWithSnakes, metadata, snakesWithBodies, recordedGame, random, turn + 1)
+        } else {
+            this
+        }
+    }
+
+    private fun placeSnakesOnBoard(board: Board, snakes: Collection<Snake>): Pair<Board, Set<Snake>> {
+        val startingPositions: Map<Position, Direction> = startingHeadPositions(
+            snakes = snakes.size,
+            width = board.getWidth(),
+            height = board.getHeight()
+        )
+            .shuffled(random)
+            .map { it to faceInwards(it, board.getWidth(), board.getHeight()) }
+            .toMap()
+
+        check(snakes.size == startingPositions.size) {
+            "Failed to generate unique positions for all snakes"
+        }
+
+        val snakesWithBodies: Set<Snake> = startingPositions.asSequence()
+            .zip(snakes.asSequence())
+            .map {
+                val segment = SnakeSegment(it.first.key, it.first.value)
+                val segments: Deque<Position> = LinkedList()
+                val directionLog: Deque<SnakeSegment> = LinkedList()
+                segments.add(it.first.key)
+                directionLog.add(segment)
+                it.second.copy(segments = segments, directionLog = directionLog)
+            }
+            .toSet()
+
+        val boardWithSnakes: Board = snakesWithBodies.fold(board) { acc: Board, snake: Snake ->
+            acc.addSnake(snake)
+        }
+
+        return boardWithSnakes to snakesWithBodies
+    }
+
+    /**
+     * Gets appropriate starting positions for snake heads.
+     *
+     * @param	snakes	The number of snakes in the game.
+     * @param	xSize	The width of the board.
+     * @param	ySize	The height of the board.
+     * @return	An array of starting positions with as many elements as the number of snakes in the game.
+     */
+    private fun startingHeadPositions(snakes: Int, width: Int, height: Int): List<Position> {
+        val xCenter: Int = width/2
+        val yCenter: Int = height/2
+        val edgeOffset: Int = 2
+
+        val angleStep: Double = 2 * Math.PI / snakes
+        var nextStep: Double = random.nextDouble() * 2 * Math.PI
+
+        return (0 until snakes)
+            .map {
+                val xRadius: Int = xCenter - edgeOffset
+                val yRadius: Int = yCenter - edgeOffset
+
+                val x: Int = (xRadius * cos(nextStep) + 0.5).roundToInt()
+                val y: Int = (yRadius * sin(nextStep) - 0.5).roundToInt()
+                nextStep += angleStep
+                Position(xCenter + x, yCenter + y)
+            }
+    }
+
+    private fun faceInwards(position: Position, width: Int, height: Int): Direction {
+        val p = Position(position.x - width/2, position.y - height/2)
+
+        return when {
+            p.x < 0 && p.y < 0 -> Direction.NORTH
+            p.x < 0 && p.y >= 0 -> Direction.WEST
+            p.x >= 0 && p.y < 0 -> Direction.EAST
+            p.x >= 0 && p.y >= 0 -> Direction.SOUTH
+            else -> error("Cannot determine direction to face for position: $position")
+        }
     }
 
     /**
