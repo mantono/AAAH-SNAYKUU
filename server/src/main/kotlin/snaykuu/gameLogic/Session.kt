@@ -54,11 +54,10 @@ class Session(
             .zip(snakes.asSequence())
             .map {
                 val segment = SnakeSegment(it.first.key, it.first.value)
-                val segments: Deque<Position> = LinkedList()
-                val directionLog: Deque<SnakeSegment> = LinkedList()
-                segments.add(it.first.key)
-                directionLog.add(segment)
-                it.second.copy(segments = segments, directionLog = directionLog)
+                it.second.copy(
+                    segments = it.second.getSegments() + it.first.key,
+                    directionLog = it.second.getDrawData() + segment
+                )
             }
             .toSet()
 

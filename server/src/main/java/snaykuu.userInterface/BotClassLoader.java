@@ -1,40 +1,38 @@
 package snaykuu.userInterface;
 
 import java.io.*;
-import java.net.*;
 import java.util.*;
-import snaykuu.gameLogic.Brain;
 
 class BotClassLoader extends ClassLoader
 {
 	private Map<String, Class<?>> loadedBrainClasses = new HashMap<String, Class<?>>();
-	
+
 	public BotClassLoader(ClassLoader parent)
-	{		
+	{
 		super(parent);
 	}
-	
+
 	public void reloadBrain(String name)
 	{
 		Class<?> brainClass = loadedBrainClasses.get(name);
 		if (brainClass == null)
 			throw new IllegalArgumentException("THE NAME " + name.toUpperCase() + " DOESN'T EVEN EXIST");
-		
+
 		// INSURT RELOAD COAD HERE
 	}
-	
+
 	public void reloadAllBrains()
 	{
 		for (String name : loadedBrainClasses.keySet())
 			reloadBrain(name);
-	}	
-	
+	}
+
 	public Brain getBrain(String name)
 	{
 		return newBrain(getBrainClass(name));
 	}
-	
-	
+
+
 	private Brain newBrain(Class<?> brainClass)
 	{
 		Object object;
@@ -50,21 +48,21 @@ class BotClassLoader extends ClassLoader
 		{
 			throw new RuntimeException("Couldn't access class " + brainClass.getName() + ": " + e);
 		}
-		
+
 		Brain brain = (Brain)object;
-		
+
 		return brain;
 	}
-	
+
 	public Class<?> getClass(String name)
 	{
 		return getBrainClass(name);
 	}
-	
+
 	private Class<?> getBrainClass(String name)
 	{
 		Class<?> brainClass = loadedBrainClasses.get(name);
-		
+
 		if (brainClass == null)
 		{
 			try
@@ -77,11 +75,11 @@ class BotClassLoader extends ClassLoader
 				throw new RuntimeException("Couldn't find class " + name + ": " + e);
 			}
 		}
-		
+
 		return brainClass;
 	}
-	
-	
+
+
 	protected Class loadClass(String name, boolean resolve) throws ClassNotFoundException
 	{
 		Class c = findLoadedClass (name);
@@ -96,13 +94,13 @@ class BotClassLoader extends ClassLoader
 				// Ignore these
 			}
 		}
-		
+
 		if (c == null)
 		{
 			// Convert class name argument to filename
 			// Convert package names into subdirectories
 			String filename = name.replace ('.', File.separatorChar) + ".class";
-			
+
 			try
 			{
 				byte[] data = loadClassData(filename);
@@ -116,13 +114,13 @@ class BotClassLoader extends ClassLoader
 				throw new ClassNotFoundException ("Error reading file: " + filename);
 			}
 		}
-		
+
 		if (resolve)
 			resolveClass(c);
-		
+
 		return c;
 	}
-	
+
 	private byte[] loadClassData(String filename) throws IOException
 	{
 		// Create a file object relative to directory provided
@@ -147,5 +145,5 @@ class BotClassLoader extends ClassLoader
 		// return data
 		return buff;
 	}
-	
+
 }

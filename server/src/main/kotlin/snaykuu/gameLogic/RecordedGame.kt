@@ -3,7 +3,9 @@ package snaykuu.gameLogic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.receiveOrNull
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -19,17 +21,24 @@ import java.util.concurrent.atomic.AtomicReference
 class GameRecorder(
     private val metadata: Metadata
 ) {
-    private var buffer: IntBuffer = IntBuffer.allocate(1)
+    private var buffer: IntBuffer = createBuffer(metadata)
     private val channel: Channel<Board> = Channel(100)
     private val started: Semaphore = Semaphore(1)
+    private val coroutineJob: AtomicReference<Job> = AtomicReference()
 
     fun start(scope: CoroutineScope = GlobalScope): Job? {
-        return if(started.tryAcquire()) {
-            scope.launch { consume(this) }
-        } else {
-            null
+        if(started.tryAcquire()) {
+            val job: Job = scope.launch { consume(this) }
+            coroutineJob.set(job)
         }
+        return coroutineJob.get()
     }
+
+    fun stop() {
+        coroutineJob.get()?.cancel("GameRecorder stopped by normal Job cancellation")
+    }
+
+    fun isRecording(): Boolean = coroutineJob.get()?.isActive ?: false
 
     private suspend fun consume(scope: CoroutineScope) {
         while(scope.coroutineContext.isActive) {
@@ -40,6 +49,7 @@ class GameRecorder(
             }
             buffer.put(frame.serialize().toIntArray())
         }
+        channel.close()
     }
 
     suspend fun add(board: Board) {

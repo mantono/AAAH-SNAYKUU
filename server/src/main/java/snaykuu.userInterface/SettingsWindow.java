@@ -1,12 +1,17 @@
 package snaykuu.userInterface;
 
+import snaykuu.gameLogic.Brain;
+import snaykuu.gameLogic.Metadata;
+import snaykuu.gameLogic.Session;
+import snaykuu.gameLogic.Snake;
+
 import javax.swing.*;
-import javax.swing.event.*;
 import java.awt.*;
-import java.awt.event.*;
-import snaykuu.gameLogic.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public class SettingsWindow extends JFrame
 {

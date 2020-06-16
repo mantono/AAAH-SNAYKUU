@@ -1,5 +1,7 @@
 package snaykuu.gameLogic
 
+import snaykuu.collections.append
+import snaykuu.collections.removeLast
 import java.awt.Color
 import java.io.Serializable
 import java.lang.IllegalStateException
@@ -20,8 +22,8 @@ data class Snake @JvmOverloads constructor(
     private val id: Int,
     private val name: String,
     private val brain: Brain,
-    private val segments: Deque<Position> = LinkedList(),
-    private val directionLog: Deque<SnakeSegment> = LinkedList(),
+    private val segments: List<Position> = LinkedList(),
+    private val directionLog: List<SnakeSegment> = LinkedList(),
     private val score: Int = 0,
     private val lifespan: Int = 0,
     private val isDead: Boolean = false,
@@ -38,7 +40,7 @@ data class Snake @JvmOverloads constructor(
      *
      * @return A list of the positions of the occupied squares.
      */
-    fun getSegments(): Deque<Position> = segments
+    fun getSegments(): List<Position> = segments
 
     /**
      * Get a list of SnakeSegments, which represent each square this snake is
@@ -49,7 +51,7 @@ data class Snake @JvmOverloads constructor(
      *
      * @return A list of this snake's positions and directions.
      */
-    fun getDrawData(): Deque<SnakeSegment> = directionLog
+    fun getDrawData(): List<SnakeSegment> = directionLog
 
     /**
      * Gets the current position of this snake's head.
@@ -57,7 +59,7 @@ data class Snake @JvmOverloads constructor(
      * @return	The Position of the snake's head.
      * @see		Position
      */
-    fun getHeadPosition(): Position = segments.first()
+    fun getHeadPosition(): Position = segments.firstOrNull()
         ?: throw IllegalStateException("Function called before snake had a head position")
 
     /**
@@ -65,7 +67,7 @@ data class Snake @JvmOverloads constructor(
      *
      * @return	The Position of the snake's last tail segment.
      */
-    fun getTailPosition(): Position = segments.last()
+    fun getTailPosition(): Position = segments.firstOrNull()
         ?: throw IllegalStateException("Function called before snake had a tail position")
 
     /**
@@ -83,7 +85,7 @@ data class Snake @JvmOverloads constructor(
      *
      * @return	The Direction in which the snake moved last turn.
      */
-    fun getCurrentDirection(): Direction = directionLog.first.dir
+    fun getCurrentDirection(): Direction = directionLog.firstOrNull()?.dir
         ?: throw IllegalStateException("Function called before snake had an entry in direcitonLog")
 
     /**
@@ -103,14 +105,14 @@ data class Snake @JvmOverloads constructor(
 
     override fun toString(): String = name
 
-    protected fun placeOnBoard(segments: Deque<Position>, originalDirection: Direction): Snake {
+    protected fun placeOnBoard(segments: List<Position>, originalDirection: Direction): Snake {
         val newDirections: List<SnakeSegment> = segments.map { SnakeSegment(it, originalDirection) }
-        return this.copy(segments = segments, directionLog = directionLog.append(newDirections))
+        return this.copy(segments = segments, directionLog = directionLog + newDirections)
     }
 
     internal fun moveHead(dir: Direction): Snake {
         val pos: Position = dir.calculateNextPosition(getHeadPosition())
-        return this.copy(segments = segments.append(pos), directionLog = directionLog.append(SnakeSegment(pos, dir)))
+        return this.copy(segments = segments + pos, directionLog = directionLog + SnakeSegment(pos, dir))
     }
 
     internal fun removeTail(): Snake {
@@ -134,16 +136,4 @@ private object BrainDead: Brain {
     override fun getNextMove(yourSnake: Snake, gameState: GameState): Nothing {
         throw IllegalStateException("This brain should not be called")
     }
-}
-
-fun <T> Deque<T>.append(other: T): Deque<T> {
-    val new = LinkedList(this)
-    new.addLast(other)
-    return new
-}
-
-fun <T> Deque<T>.append(other: List<T>): Deque<T> {
-    val new = LinkedList(this)
-    new.addAll(other)
-    return new
 }
