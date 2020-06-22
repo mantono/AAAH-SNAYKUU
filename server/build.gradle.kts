@@ -30,12 +30,14 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlin", "kotlin-stdlib-jdk8", "1.3.72")
-    implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8", "1.3.3")
+    implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk9", "1.3.7")
 
     // Logging
     implementation("io.github.microutils", "kotlin-logging", "1.6.20")
     // Enable for applications
     // runtime("ch.qos.logback", "logback-classic", "1.2.3")
+    implementation("com.fasterxml.jackson.core", "jackson-core", "2.11.0")
+    implementation("com.fasterxml.jackson.module", "jackson-module-kotlin", "2.11.0")
 
     // Junit
     testImplementation("org.junit.jupiter", "junit-jupiter-api", version("junit"))

@@ -21,12 +21,12 @@ import java.util.*
 data class Snake @JvmOverloads constructor(
     private val id: Int,
     private val name: String,
-    private val brain: Brain,
-    private val segments: List<Position> = LinkedList(),
-    private val directionLog: List<SnakeSegment> = LinkedList(),
-    private val score: Int = 0,
-    private val lifespan: Int = 0,
-    private val isDead: Boolean = false,
+    private var brain: Brain,
+    private val segments: LinkedList<Position> = LinkedList(),
+    private val directionLog: LinkedList<SnakeSegment> = LinkedList(),
+    private var score: Int = 0,
+    private var lifespan: Int = 0,
+    private var isDead: Boolean = false,
     private val color: Color
 ): GameObject, Serializable {
 
@@ -105,25 +105,50 @@ data class Snake @JvmOverloads constructor(
 
     override fun toString(): String = name
 
-    protected fun placeOnBoard(segments: List<Position>, originalDirection: Direction): Snake {
-        val newDirections: List<SnakeSegment> = segments.map { SnakeSegment(it, originalDirection) }
-        return this.copy(segments = segments, directionLog = directionLog + newDirections)
-    }
+//    protected fun placeOnBoard(segments: List<Position>, originalDirection: Direction): Snake {
+//        val newDirections: List<SnakeSegment> = segments.map { SnakeSegment(it, originalDirection) }
+//        return this.copy(segments = segments, directionLog = directionLog + newDirections)
+//    }
 
-    internal fun moveHead(dir: Direction): Snake {
+    internal fun moveHead(dir: Direction) {
         val pos: Position = dir.calculateNextPosition(getHeadPosition())
-        return this.copy(segments = segments + pos, directionLog = directionLog + SnakeSegment(pos, dir))
+        segments.push(pos)
+        directionLog.push(SnakeSegment(pos, dir))
     }
 
-    internal fun removeTail(): Snake {
-        return this.copy(directionLog = directionLog.also { it.removeLast() })
+    internal fun removeTail() {
+        segments.removeLast()
     }
 
-    internal fun kill(): Snake = this.copy(isDead = true)
+    internal fun initAt(head: Position, facing: Direction) {
+        check(!isDead())
+        check(lifespan == 0)
+        check(segments.isEmpty())
+        segments.push(head)
+        directionLog.push(SnakeSegment(head, facing))
+    }
+
+    internal fun kill() {
+        this.isDead = true
+    }
+
+    internal fun removeBrain(): Snake {
+        this.brain = BrainDead
+        return this
+    }
+
     internal fun getBrain(): Brain = brain
-    internal fun addScore(): Snake = this.copy(score = score + 1)
-    internal fun increaseLifespan(): Snake = this.copy(lifespan = lifespan + 1)
-    internal fun removeBrain(): Snake = this.copy(brain = BrainDead)
+
+    internal fun addScore(): Int {
+        check(!isDead)
+        return ++score
+    }
+
+    internal fun increaseLifespan(): Int {
+        check(!isDead())
+        return ++lifespan
+    }
+
     fun getColor(): Color = color
     fun getName(): String = name
 

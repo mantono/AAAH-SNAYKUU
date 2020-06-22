@@ -1,5 +1,7 @@
 package snaykuu.userInterface;
 
+import snaykuu.gameLogic.Brain;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;

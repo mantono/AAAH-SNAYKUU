@@ -55,4 +55,9 @@ data class Metadata(
      * @return	The number of fruit required to win the game.
      */
     val fruitGoal: Int
-)
+) {
+    /**
+     * Gets the size of the board
+     */
+    fun boardSize(): Int = boardWidth * boardHeight
+}

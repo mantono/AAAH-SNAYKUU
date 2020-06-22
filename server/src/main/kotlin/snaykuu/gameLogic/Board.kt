@@ -1,7 +1,6 @@
 package snaykuu.gameLogic
 
 import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * This class represents the entire game board through a 2D-array of Square objects.
@@ -11,10 +10,10 @@ import kotlin.collections.ArrayList
  * @author	Arian Jafari
  * @see		Square
  */
-class Board private constructor(
+class Board internal constructor(
     private val width: Int,
     private val height: Int,
-    private val squares: List<Int>
+    private val squares: Array<Int>
 ): Iterable<Pair<Position, Square>> {
     constructor(width: Int, height: Int): this(width, height, createBoard(width, height))
 
@@ -70,7 +69,7 @@ class Board private constructor(
      */
     fun isLethal(position: Position): Boolean = getSquare(position).isLethal()
 
-    fun getSquare(position: Position): Square = squares[position]
+    fun getSquare(position: Position): Square = this[position]
 
     /**
      * Calculates whether or not the board contains a lethal object within a given radius of
@@ -109,75 +108,47 @@ class Board private constructor(
             .any { it.isLethal() }
     }
 
-    internal fun removeFruit(position: Position): Board {
-        return modify(position) { current: Int -> current - Fruit.value() }
+    internal fun removeFruit(position: Position): Boolean = remove(position, Fruit)
+
+    internal fun add(position: Position, obj: GameObject): Boolean {
+        val currentValue: Int = this[position].toInt()
+        val newValue: Int = currentValue and (obj.value())
+        this[position] = newValue
+        return currentValue != newValue
     }
 
-    internal fun add(position: Position, obj: GameObject): Board {
-        return modify(position) { it + obj.value() }
+    internal fun clearSquare(position: Position): Boolean {
+        val currentValue: Int = this[position].toInt()
+        this[position] = 0
+        return currentValue != 0
     }
 
-    internal fun clearSquare(position: Position): Board {
-        return modify(position) { 0 }
+    internal fun removeAllSnakes(): List<Position> {
+        //  =
+        //        Board(width, height, squares.map { it and (Wall.value() + Fruit.value()) })
+        return asSequence()
+            .filter { it.second.hasSnake() }
+            .map { it.first }
+            .onEach {
+                val currentValue: Int = this[it].toInt()
+                val newValue: Int = currentValue and (Wall + Fruit)
+                squares[index(it)] = newValue
+            }
+            .toList()
     }
 
-    internal fun remove(position: Position, obj: GameObject): Board {
-        return modify(position) { current: Int -> current - obj.value() }
-    }
-
-    internal fun removeAll(positions: List<Position>, obj: GameObject): Board {
-        return modify(positions) { current: Int -> current - obj.value() }
-    }
-
-    internal fun removeAllSnakes(): Board =
-        Board(width, height, squares.map { it and (Wall.value() + Fruit.value()) })
-
-    internal fun addAll(objects: Map<GameObject, List<Position>>): Board {
-        val copy: MutableList<Int> = ArrayList(squares)
-        objects.asSequence()
-            .map { it.value.map { pos -> pos to it.key.value() } }
-            .flatten()
-            .forEach { (position, value) -> copy[index(position)] += value }
-
-        return Board(width, height, copy)
-    }
-
-    internal fun addSnake(snake: Snake): Board {
+    internal fun addSnake(snake: Snake): Boolean {
         require(snake.size > 0) { "Cannot add an empty snake" }
-        return modify(snake.getSegments().toList()) { value: Int -> value + snake.value() }
+        return snake.getSegments()
+            .map { add(it, snake) }
+            .any()
     }
 
-    private fun set(position: Position, newValue: Int): Board {
-        val updatedBoard: List<Int> = squares.replace(index(position), newValue)
-        return Board(width, height, updatedBoard)
-    }
-
-    private inline fun modify(
-        position: Position,
-        modify: (current: Int) -> Int
-    ): Board {
-        val currentValue: Int = squares[position].toInt()
-        val newValue: Int = modify(currentValue)
-        return if(newValue != currentValue) {
-            val updatedBoard: List<Int> = squares.replace(index(position), newValue)
-            return Board(width, height, updatedBoard)
-        } else {
-            this
-        }
-    }
-
-    private inline fun modify(
-        positions: List<Position>,
-        crossinline modify: (current: Int) -> Int
-    ): Board {
-        val changes: Map<Int, Int> = positions
-            .asSequence()
-            .map { index(it) to squares[it] }
-            .map { it.first to modify(it.second.toInt()) }
-            .toMap()
-
-        val updatedBoard: List<Int> = squares.replace(changes)
-        return Board(width, height, updatedBoard)
+    private fun remove(position: Position, obj: GameObject): Boolean {
+        val currentValue: Int = this[position].toInt()
+        val newValue: Int = currentValue and (obj.value().inv())
+        this[position] = newValue
+        return currentValue != newValue
     }
 
     override fun iterator(): Iterator<Pair<Position, Square>> = this.squares
@@ -185,7 +156,7 @@ class Board private constructor(
         .mapIndexed { i: Int, value: Int -> Position(i % width, i / height) to Square(value) }
         .iterator()
 
-    internal fun serialize(): List<Int> = this.squares
+    internal fun serialize(): List<Int> = this.squares.toList()
 
     internal fun squares(): Sequence<Square> = this.squares.asSequence().map { Square(it) }
 
@@ -193,20 +164,26 @@ class Board private constructor(
         .asSequence()
         .map { i -> Position(i % width, i / height) }
 
-    internal operator fun List<Int>.get(position: Position): Square {
+    private operator fun List<Int>.get(position: Position): Square {
         val index: Int = index(position)
         return Square(squares[index])
     }
 
+    operator fun get(position: Position): Square = this[index(position)]
+    internal operator fun get(index: Int): Square = Square(squares[index])
     private fun index(position: Position): Int = (position.y * width) + position.x
+
+    private operator fun set(position: Position, value: Int) {
+        this[position] = value
+    }
 
     companion object {
         private const val MIN_SIZE: Int = 3
 
-        private fun createBoard(width: Int, height: Int): List<Int> {
+        private fun createBoard(width: Int, height: Int): Array<Int> {
             val board = Array(width * height) { 0 }
             addWalls(board, width, height)
-            return board.toList()
+            return board
         }
 
         private fun addWalls(board: Array<Int>, width: Int, height: Int) {
@@ -229,14 +206,6 @@ class Board private constructor(
     }
 }
 
-private fun List<Int>.replace(i: Int, value: Int): List<Int> {
-    val list = this.toMutableList()
-    list[i] = value
-    return list
-}
-
-private fun List<Int>.replace(changes: Map<Int, Int>): List<Int> {
-    val list = this.toMutableList()
-    changes.forEach { (i, value) -> list[i] = value }
-    return list
+internal operator fun GameObject.plus(other: GameObject): Int {
+    return this.value() + other.value()
 }

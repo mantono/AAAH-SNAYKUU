@@ -9,9 +9,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 public class SettingsWindow extends JFrame
 {
@@ -84,20 +84,19 @@ public class SettingsWindow extends JFrame
 	{
 		Metadata metadata = gameSettingsPanel.generateMetadata();
 
-		Session session = new Session(metadata);
-
 		Random r = new Random(4L);
 		int numSnakes = snakeSettingsPanel.getSnakes().size();
 		float stepSize = 0.8f/numSnakes;
 		int currentSnake = 0;
-		Set<Snake> snakes = snakeSettingsPanel.getSnakes()
 
+		HashSet<Snake> snakes = new HashSet<Snake>(16);
 		for (Map.Entry<String, Brain> snakeEntry : snakeSettingsPanel.getSnakes().entrySet())
 		{
-			Snake snake = new Snake(currentSnake, snakeEntry.getKey(), snakeEntry.getValue(), Color.getHSBColor(stepSize*currentSnake++, r.nextFloat()/2+0.5f, r.nextFloat()/2+0.5f));
-			session.addSnake(snake);
+			Snake snake = new Snake(currentSnake++, snakeEntry.getKey(), snakeEntry.getValue(), Color.getHSBColor(stepSize*currentSnake++, r.nextFloat()/2+0.5f, r.nextFloat()/2+0.5f));
+			snakes.add(snake);
 		}
 
+		Session session = new Session(metadata, snakes);
 		session.prepareForStart();
 		return session;
 	}

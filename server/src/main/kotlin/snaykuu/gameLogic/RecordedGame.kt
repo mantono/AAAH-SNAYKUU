@@ -1,78 +1,69 @@
 package snaykuu.gameLogic
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.receiveOrNull
-import kotlinx.coroutines.channels.sendBlocking
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import java.io.BufferedOutputStream
+import java.io.BufferedInputStream
 import java.io.File
+import java.io.FileInputStream
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import java.io.BufferedOutputStream
 import java.io.FileOutputStream
-import java.nio.IntBuffer
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.atomic.AtomicReference
 
-class GameRecorder(
-    private val metadata: Metadata
-) {
-    private var buffer: IntBuffer = createBuffer(metadata)
-    private val channel: Channel<Board> = Channel(100)
-    private val started: Semaphore = Semaphore(1)
-    private val coroutineJob: AtomicReference<Job> = AtomicReference()
+class RecordedGame(
+    private val metadata: Metadata,
+    private val snakes: Map<Int, String>,
+    private val frames: List<Board>
+): Iterator<Board> by frames.iterator() {
 
-    fun start(scope: CoroutineScope = GlobalScope): Job? {
-        if(started.tryAcquire()) {
-            val job: Job = scope.launch { consume(this) }
-            coroutineJob.set(job)
+    private data class CompactRepresentation(
+        private val metadata: Metadata,
+        private val snakes: Map<Int, String>,
+        private val frames: List<Int>
+    ) {
+        fun asRecordedGame(): RecordedGame {
+            val boards: List<Board> = frames.asSequence()
+                .chunked(metadata.boardSize())
+                .map { Board(metadata.boardWidth, metadata.boardHeight, it.toTypedArray()) }
+                .toList()
+
+            return RecordedGame(metadata, snakes, boards)
         }
-        return coroutineJob.get()
-    }
 
-    fun stop() {
-        coroutineJob.get()?.cancel("GameRecorder stopped by normal Job cancellation")
-    }
+        companion object {
+            fun fromRecordedGame(snapshot: RecordedGame): CompactRepresentation {
+                val boardSize: Int = snapshot.metadata.boardWidth * snapshot.metadata.boardHeight
+                val requiredCapacity: Int = boardSize * snapshot.frames.size
+                val frames: MutableList<Int> = ArrayList(requiredCapacity)
+                snapshot.asSequence()
+                    .map { it.serialize() }
+                    .flatten()
+                    .forEach { square: Int -> frames.add(square) }
 
-    fun isRecording(): Boolean = coroutineJob.get()?.isActive ?: false
-
-    private suspend fun consume(scope: CoroutineScope) {
-        while(scope.coroutineContext.isActive) {
-            val frame: Board = channel.receive()
-            if(buffer.remaining() == 0) {
-                val newSize: Int = buffer.capacity() * 2
-                buffer = IntBuffer.wrap(buffer.array(), 0, newSize)
+                return CompactRepresentation(snapshot.metadata, snapshot.snakes, frames)
             }
-            buffer.put(frame.serialize().toIntArray())
         }
-        channel.close()
     }
 
-    suspend fun add(board: Board) {
-        channel.send(board)
-    }
+    fun save(file: File = fileName()): Long {
+        check(!file.exists()) { "Cannot save to file '$file': File already exists" }
+        check(file.createNewFile()) { "Unable to create file: '$file" }
+        check(file.canWrite()) { "Unable to write to file: '$file'" }
 
-    fun addBlocking(board: Board) {
-        channel.sendBlocking(board)
-    }
+        val intermediateRepresentation = CompactRepresentation.fromRecordedGame(this)
+        val serialized: String = DefaultMapper.writeValueAsString(intermediateRepresentation)
+        val fileStream: BufferedOutputStream = FileOutputStream(file).buffered(BUFFER_SIZE)
 
-    fun save(file: File = fileName()): File {
-        val bufferSize: Int = metadata.boardWidth * metadata.boardHeight * Int.SIZE_BYTES
-        val fileStream: BufferedOutputStream = FileOutputStream(file).buffered(bufferSize)
-        buffer.reset()
         fileStream.use { stream ->
-            while(buffer.position() < buffer.limit()) {
-                stream.write(buffer.get())
-            }
+            stream.write(serialized.toByteArray())
         }
-        return file
+
+        return file.length()
     }
 
     companion object {
+        private const val BUFFER_SIZE: Int = 128 * 128 * Int.SIZE_BYTES
         private const val SAVED_FILE_PREFIX = "snaykuu_"
         private const val SAVED_FILE_SUFFIX = "sny"
 
@@ -83,15 +74,25 @@ class GameRecorder(
             return File.createTempFile(SAVED_FILE_PREFIX + "_$date", SAVED_FILE_SUFFIX)
         }
 
-        private fun createBuffer(metadata: Metadata): IntBuffer {
-            val frameSize: Int = metadata.boardWidth * metadata.boardHeight
-            val estimatedTurns: Int = if(metadata.growthFrequency == 0) {
-                2_000
-            } else {
-                200 * metadata.growthFrequency.coerceAtLeast(1)
+        fun load(file: File): RecordedGame {
+            check(file.exists()) { "Cannot load from file '$file': File does not exist" }
+            check(file.canRead()) { "Cannot load from file: '$file': Unable to read file" }
+
+            val fileStream: BufferedInputStream = FileInputStream(file).buffered(BUFFER_SIZE)
+            val bytes = ByteArray(file.length().toInt())
+            fileStream.use { stream ->
+                stream.read(bytes)
             }
-            val initialAllocation: Int = frameSize * estimatedTurns
-            return IntBuffer.allocate(initialAllocation)
+
+            val json = String(bytes, Charsets.UTF_8)
+            val intermediateRepresentation: CompactRepresentation = DefaultMapper.readValue(json)
+            return intermediateRepresentation.asRecordedGame()
         }
+    }
+}
+
+internal object DefaultMapper: ObjectMapper() {
+    init {
+        registerKotlinModule()
     }
 }

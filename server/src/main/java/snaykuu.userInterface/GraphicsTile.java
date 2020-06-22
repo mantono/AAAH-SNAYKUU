@@ -1,11 +1,12 @@
 package snaykuu.userInterface;
 
+import snaykuu.gameLogic.Direction;
+import snaykuu.gameLogic.Position;
+
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.net.URL;
 
 enum GraphicsTile

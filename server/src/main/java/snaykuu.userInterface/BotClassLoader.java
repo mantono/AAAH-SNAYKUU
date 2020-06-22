@@ -1,7 +1,13 @@
 package snaykuu.userInterface;
 
-import java.io.*;
-import java.util.*;
+import snaykuu.gameLogic.Brain;
+
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 class BotClassLoader extends ClassLoader
 {

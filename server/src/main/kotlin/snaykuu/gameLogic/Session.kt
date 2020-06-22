@@ -3,21 +3,24 @@ package snaykuu.gameLogic
 import java.time.Duration
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeoutException
+import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
-class Session(
-    private val board: Board,
+class Session @JvmOverloads constructor(
     private val metadata: Metadata,
-    private val snakes: Set<Snake> = HashSet(16),
-    private val recordedGame: GameRecorder = GameRecorder(metadata),
+    private val snakes: MutableSet<Snake> = HashSet(16),
+    private val board: Board = Board(metadata.boardWidth, metadata.boardHeight),
+    private val outcomes: MutableMap<Int, Outcome> = HashMap(snakes.size),
+    private val recordedGame: GameRecorder = GameRecorder(metadata, snakes),
     private val random: Random = Random(),
-    private val turn: Int = 0
+    private var turn: Int = 0
 ): Game {
-    constructor(metadata: Metadata): this(Board(metadata.boardWidth, metadata.boardHeight), metadata)
+    private val started = Semaphore(1)
 
     override fun getCurrentState(): GameState = GameState(board, snakes, metadata, NotStarted)
     override fun getGameResult(): GameResult = GameResult(snakes, metadata, recordedGame)
@@ -26,17 +29,14 @@ class Session(
     fun getBoard(): Board = board
     fun getSnakes(): Set<Snake> = snakes
 
-    fun prepareForStart(): Session {
-        return if(turn == 0) {
-            val (boardWithSnakes: Board, snakesWithBodies: Set<Snake>) = placeSnakesOnBoard(board, snakes)
+    fun prepareForStart() {
+        if(started.tryAcquire()) {
+            placeSnakesOnBoard()
             recordedGame.start()
-            Session(boardWithSnakes, metadata, snakesWithBodies, recordedGame, random, turn + 1)
-        } else {
-            this
         }
     }
 
-    private fun placeSnakesOnBoard(board: Board, snakes: Collection<Snake>): Pair<Board, Set<Snake>> {
+    private fun placeSnakesOnBoard() {
         val startingPositions: Map<Position, Direction> = startingHeadPositions(
             snakes = snakes.size,
             width = board.getWidth(),
@@ -50,30 +50,21 @@ class Session(
             "Failed to generate unique positions for all snakes"
         }
 
-        val snakesWithBodies: Set<Snake> = startingPositions.asSequence()
+        startingPositions.asSequence()
             .zip(snakes.asSequence())
-            .map {
-                val segment = SnakeSegment(it.first.key, it.first.value)
-                it.second.copy(
-                    segments = it.second.getSegments() + it.first.key,
-                    directionLog = it.second.getDrawData() + segment
-                )
+            .forEach { (placing, snake) ->
+                val (position, direction) = placing
+                snake.initAt(position, direction)
+                board.add(position, snake)
             }
-            .toSet()
-
-        val boardWithSnakes: Board = snakesWithBodies.fold(board) { acc: Board, snake: Snake ->
-            acc.addSnake(snake)
-        }
-
-        return boardWithSnakes to snakesWithBodies
     }
 
     /**
      * Gets appropriate starting positions for snake heads.
      *
      * @param	snakes	The number of snakes in the game.
-     * @param	xSize	The width of the board.
-     * @param	ySize	The height of the board.
+     * @param	width	The width of the board.
+     * @param	height	The height of the board.
      * @return	An array of starting positions with as many elements as the number of snakes in the game.
      */
     private fun startingHeadPositions(snakes: Int, width: Int, height: Int): List<Position> {
@@ -108,6 +99,8 @@ class Session(
         }
     }
 
+    override fun hasStarted(): Boolean = started.availablePermits() > 0
+
     /**
      * Checks whether the game has ended or not. If only one snake remains alive (and
      * the game was started using more than one snake), or if a snake has achieved the
@@ -134,19 +127,18 @@ class Session(
      */
     override fun tick(): Game {
         check(!hasEnded()) { "Game has ended" }
-        val growth: Boolean = growSnakes()
 
         // Ask snake brains what moves they would like to do
         val moves: Map<Snake, Direction> = getDecisionsFromSnakes()
 
         // Update board and apply snake moves
-        val (updatedBoard: Board, updatedSnakes: Set<Snake>) = updateBoardState(snakes, moves, board)
+        updateBoardState(moves)
 
         // Add new fruits to board (when needed)
-        val boardWithNewFruit: Board = perhapsSpawnFruit(updatedBoard)
-
-        recordedGame.addBlocking(boardWithNewFruit)
-        return Session(boardWithNewFruit, metadata, updatedSnakes, recordedGame, random, turn + 1)
+        perhapsSpawnFruit()
+        turn++
+        recordedGame.addBlocking(board)
+        return this
     }
 
     fun cleanup() {
@@ -156,17 +148,18 @@ class Session(
     private fun growSnakes(): Boolean = turn % metadata.growthFrequency == 0
     private fun spawnFruit(): Boolean = turn % metadata.fruitFrequency == 0
 
-    private fun perhapsSpawnFruit(board: Board): Board {
+    private fun perhapsSpawnFruit(): Boolean {
         if(!spawnFruit()) {
-            return board
+            return false
         }
         val (position, _) = board.asSequence()
             .filter { it.second.isEmpty() }
             .toList()
             .shuffled(random)
-            .firstOrNull() ?: return board
+            .firstOrNull() ?: return false
 
-        return board.add(position, Fruit)
+        board.add(position, Fruit)
+        return true
     }
 
     /**
@@ -183,7 +176,8 @@ class Session(
         val decisionThreads: Map<Snake, BrainDecision> = snakes.asSequence()
             .filter { !it.isDead() }
             .map {
-                val currentGameState = GameState(board, snakes, metadata, NotStarted)
+                val previousState: Outcome = outcomes[it.value()] ?: NotStarted
+                val currentGameState = GameState(board, snakes, metadata, previousState)
                 it to BrainDecision(it, currentGameState)
             }
             .toMap()
@@ -200,6 +194,7 @@ class Session(
 
         return decisionThreads.asSequence()
             .map { it.key to parseMove(it.key, it.value) }
+            .onEach { outcomes[it.first.value()] = it.second }
             .map { it.first to it.second.validMoveOr(it.first.getCurrentDirection()) }
             .toMap()
     }
@@ -227,8 +222,9 @@ class Session(
      * @param	moves		Map of each snake to its desired movement.
      * @param	growSnakes	Whether or not snakes are supposed to grow this turn.
      */
-    private fun moveAllSnakes(moves: Map<Snake, Direction>, growSnakes: Boolean): Set<Snake> =
-        moves.map { moveSnake(it.key, it.value, growSnakes) }.toSet()
+    private fun moveAllSnakes(moves: Map<Snake, Direction>, growSnakes: Boolean) {
+        moves.forEach { moveSnake(it.key, it.value, growSnakes) }
+    }
 
     /**
      * Moves a single snake in the specified direction and grows the snake if necessary.
@@ -239,11 +235,10 @@ class Session(
      * @param	dir		The direction in which the snake is to be moved.
      * @param	grow	Whether or not the snake is supposed to grow this turn.
      */
-    private fun moveSnake(snake: Snake, dir: Direction, grow: Boolean): Snake {
-        return if(grow) {
-            snake.moveHead(dir)
-        } else {
-            snake.moveHead(dir).removeTail()
+    private fun moveSnake(snake: Snake, dir: Direction, grow: Boolean) {
+        snake.moveHead(dir)
+        if(!grow) {
+            snake.removeTail()
         }
     }
     /**
@@ -252,48 +247,29 @@ class Session(
      * killed (e g marked as dead). If it collided with a fruit, the appropriate amount of points is
      * added to that snake's score.
      */
-    private fun updateSnakeStates(snakes: Collection<Snake>, board: Board): Set<Snake> {
-        return snakes.asSequence()
-            .map { snake ->
-                val head: Position = snake.getHeadPosition()
-                val square: Square = board.getSquare(head)
-                when {
-                    square.hasMultipleSnakes() -> snake.kill()
-                    square.hasWall() -> snake.kill()
-                    square.hasFruit() -> snake.addScore().increaseLifespan()
-                    else -> snake.increaseLifespan()
+    private fun updateSnakeStates() {
+        snakes.forEach { snake: Snake ->
+            val head: Position = snake.getHeadPosition()
+            val square: Square = board.getSquare(head)
+            when {
+                square.hasMultipleSnakes() -> snake.kill()
+                square.hasWall() -> snake.kill()
+                square.hasFruit() -> {
+                    snake.addScore()
+                    snake.increaseLifespan()
                 }
+                else -> snake.increaseLifespan()
             }
-            .toSet()
+        }
     }
 
-    private fun updateBoardState(
-        snakes: Collection<Snake>,
-        moves: Map<Snake, Direction>,
-        board: Board
-    ): Pair<Board, Set<Snake>> {
-        val eatenFruits: List<Position> = board.asSequence()
+    private fun updateBoardState(moves: Map<Snake, Direction>) {
+        moveAllSnakes(moves, growSnakes())
+        updateSnakeStates()
+
+        board.asSequence()
             .filter { it.second.hasSnakeEatingFruit() }
             .map { it.first }
-            .toList()
-
-        val movedSnakes: Set<Snake> = moveAllSnakes(moves, growSnakes())
-        val updatedSnakeState: Set<Snake> = updateSnakeStates(movedSnakes, board)
-        val allSnakes: Set<Snake> = (snakes + updatedSnakeState).asSequence().onlyLatestSnakes()
-        val snakesWithPositions: Map<GameObject, List<Position>> = allSnakes.asSequence()
-            .map { it to it.getSegments().toList() }
-            .toMap()
-
-        val updatedBoard: Board = board
-            .removeAllSnakes()
-            .removeAll(eatenFruits, Fruit)
-            .addAll(snakesWithPositions)
-
-        return updatedBoard to allSnakes
+            .forEach { board.removeFruit(it) }
     }
 }
-
-private fun Sequence<Snake>.onlyLatestSnakes(): Set<Snake> = this
-    .sortedByDescending { it.getLifespan() }
-    .distinctBy { it.value() }
-    .toSet()

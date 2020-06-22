@@ -1,5 +1,6 @@
 package snaykuu;
 
+import snaykuu.gameLogic.Session;
 import snaykuu.userInterface.GameEndType;
 import snaykuu.userInterface.MainWindow;
 import snaykuu.userInterface.PostGameWindow;
