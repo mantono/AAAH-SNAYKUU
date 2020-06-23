@@ -5,6 +5,11 @@ interface Game {
     fun getMetadata(): Metadata
     fun getGameResult(): GameResult
     fun tick(): Game
-    fun hasStarted(): Boolean
-    fun hasEnded(): Boolean
+    fun state(): State
+}
+
+enum class State {
+    NotStarted,
+    Playing,
+    Finished
 }

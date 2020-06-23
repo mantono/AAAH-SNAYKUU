@@ -6,6 +6,7 @@ import java.io.FileInputStream
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import java.awt.Color
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.time.LocalDateTime
@@ -13,13 +14,48 @@ import java.time.format.DateTimeFormatter
 
 class RecordedGame(
     private val metadata: Metadata,
-    private val snakes: Map<Int, String>,
+    private val snakes: MutableSet<Snake>,
     private val frames: List<Board>
-): Iterator<Board> by frames.iterator() {
+): Iterator<Board> by frames.iterator(), Game {
+    private var turn: Int = -1
+
+    constructor(metadata: Metadata, snakes: Collection<Snake>, frames: List<Board>):
+        this(metadata, snakes.toMutableSet(), frames)
+
+    override fun getMetadata(): Metadata = metadata
+
+    override fun getGameResult(): GameResult = GameResult(snakes, this)
+
+    override fun getCurrentState(): GameState {
+        val i: Int = turn.coerceIn(0, frames.lastIndex)
+        val currentBoard: Board = frames[i]
+        updateSnakes(currentBoard)
+        return GameState(currentBoard, snakes, metadata, NotStarted)
+    }
+
+    private fun updateSnakes(board: Board) {
+        board.getAllSnakes().asSequence()
+            .forEach { snakes }
+    }
+
+    override fun state(): State {
+        return when(turn) {
+            -1 -> State.NotStarted
+            in 0..frames.lastIndex -> State.Playing
+            else -> State.Finished
+        }
+    }
+
+    override fun tick(): Game {
+        if(state() != State.Finished) {
+            turn++
+        }
+        return this
+    }
 
     private data class CompactRepresentation(
         private val metadata: Metadata,
-        private val snakes: Map<Int, String>,
+        private val snakes: Collection<String>,
         private val frames: List<Int>
     ) {
         fun asRecordedGame(): RecordedGame {
@@ -28,7 +64,8 @@ class RecordedGame(
                 .map { Board(metadata.boardWidth, metadata.boardHeight, it.toTypedArray()) }
                 .toList()
 
-            return RecordedGame(metadata, snakes, boards)
+            val recreatedSnakes: MutableSet<Snake> = Snake.create(snakes.sorted().map { it to null }.toMap())
+            return RecordedGame(metadata, recreatedSnakes, boards)
         }
 
         companion object {
@@ -41,7 +78,8 @@ class RecordedGame(
                     .flatten()
                     .forEach { square: Int -> frames.add(square) }
 
-                return CompactRepresentation(snapshot.metadata, snapshot.snakes, frames)
+                val snakeNames = snapshot.snakes.map { it.getName() }
+                return CompactRepresentation(snapshot.metadata, snakeNames, frames)
             }
         }
     }

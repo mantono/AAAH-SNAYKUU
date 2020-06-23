@@ -1,6 +1,7 @@
 package snaykuu;
 
 import snaykuu.gameLogic.Session;
+import snaykuu.gameLogic.State;
 import snaykuu.userInterface.GameEndType;
 import snaykuu.userInterface.MainWindow;
 import snaykuu.userInterface.PostGameWindow;
@@ -80,7 +81,7 @@ class Main
 		mainWindow.repaint();
 		sleep(1000);
 
-		while (!session.hasEnded())
+		while (session.state() != State.Finished)
 		{
 			session.tick();
 			mainWindow.update();

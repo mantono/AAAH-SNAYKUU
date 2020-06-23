@@ -23,7 +23,7 @@ class Session @JvmOverloads constructor(
     private val started = Semaphore(1)
 
     override fun getCurrentState(): GameState = GameState(board, snakes, metadata, NotStarted)
-    override fun getGameResult(): GameResult = GameResult(snakes, metadata, recordedGame)
+    override fun getGameResult(): GameResult = GameResult(snakes, recordedGame.save())
     override fun getMetadata(): Metadata = metadata
 
     fun getBoard(): Board = board
@@ -99,7 +99,15 @@ class Session @JvmOverloads constructor(
         }
     }
 
-    override fun hasStarted(): Boolean = started.availablePermits() > 0
+    override fun state(): State {
+        return when {
+            !hasStarted() -> State.NotStarted
+            hasEnded() -> State.Finished
+            else -> State.Playing
+        }
+    }
+
+    private fun hasStarted(): Boolean = started.availablePermits() == 0
 
     /**
      * Checks whether the game has ended or not. If only one snake remains alive (and
@@ -108,15 +116,25 @@ class Session @JvmOverloads constructor(
      *
      * @return	<code>true</code> if the game has ended, <code>false</code> if not.
      */
-    override fun hasEnded(): Boolean {
+    private fun hasEnded(): Boolean = reachedMaxScore() || snakesAreDead()
+
+    private fun reachedMaxScore(): Boolean {
+        val maxScore: Int = snakes.maxBy { it.getScore() }?.getScore() ?: -1
+        return maxScore >= metadata.fruitGoal
+    }
+
+    /**
+     * Return true if only one snake remains alive and the game was started
+     * using more than one snake, else it will return true if all snares are
+     * dead. In all other cases it will return false.
+     */
+    private fun snakesAreDead(): Boolean {
         val numberOfLivingSnakes: Int = snakes.count { !it.isDead() }
         val players: Int = snakes.size
-        val maxScore: Int = snakes.maxBy { it.getScore() }?.getScore() ?: -1
 
         return when {
             numberOfLivingSnakes == 0 -> true
             numberOfLivingSnakes == 1 && numberOfLivingSnakes < players -> true
-            maxScore >= metadata.fruitGoal -> true
             else -> false
         }
     }
@@ -127,6 +145,7 @@ class Session @JvmOverloads constructor(
      */
     override fun tick(): Game {
         check(!hasEnded()) { "Game has ended" }
+        turn++
 
         // Ask snake brains what moves they would like to do
         val moves: Map<Snake, Direction> = getDecisionsFromSnakes()
@@ -136,7 +155,6 @@ class Session @JvmOverloads constructor(
 
         // Add new fruits to board (when needed)
         perhapsSpawnFruit()
-        turn++
         recordedGame.addBlocking(board)
         return this
     }

@@ -1,10 +1,6 @@
 package snaykuu.gameLogic
 
-import snaykuu.collections.append
-import snaykuu.collections.removeLast
 import java.awt.Color
-import java.io.Serializable
-import java.lang.IllegalStateException
 import java.util.*
 
 /**
@@ -21,14 +17,14 @@ import java.util.*
 data class Snake @JvmOverloads constructor(
     private val id: Int,
     private val name: String,
-    private var brain: Brain,
+    private var brain: Brain = BrainDead,
     private val segments: LinkedList<Position> = LinkedList(),
     private val directionLog: LinkedList<SnakeSegment> = LinkedList(),
     private var score: Int = 0,
     private var lifespan: Int = 0,
     private var isDead: Boolean = false,
     private val color: Color
-): GameObject, Serializable {
+): GameObject, SerializableSnake {
 
     /**
      * Get the size of the snake
@@ -150,11 +146,41 @@ data class Snake @JvmOverloads constructor(
     }
 
     fun getColor(): Color = color
-    fun getName(): String = name
+    override fun getName(): String = name
 
     override fun getTypeName(): String = "Snake"
     override fun value(): Int = 1 shl(id + 2)
     override fun isLethal(): Boolean = true
+
+    companion object {
+        private fun colorForSnake(
+            rand: Random,
+            i: Int,
+            stepSize: Float
+        ): Color {
+            val hue: Float = stepSize * i
+            val saturation: Float = rand.nextFloat() / 2 + 0.5f
+            val brightness: Float = rand.nextFloat() / 2 + 0.5f
+            return Color.getHSBColor(hue, saturation, brightness)
+        }
+
+        @JvmOverloads
+        fun create(
+            snakeData: Map<String, Brain?>,
+            random: Random = Random(4L)
+        ): MutableSet<Snake> {
+            val numSnakes: Int = snakeData.size
+            val stepSize: Float = 0.8f / numSnakes
+            return snakeData.asSequence()
+                .sortedBy { it.key }
+                .mapIndexed { index, entry ->
+                    val brain: Brain = entry.value ?: BrainDead
+                    val color = colorForSnake(random, index, stepSize)
+                    Snake(index, entry.key, brain, color = color)
+                }
+                .toMutableSet()
+        }
+    }
 }
 
 private object BrainDead: Brain {

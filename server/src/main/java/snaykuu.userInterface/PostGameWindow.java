@@ -1,12 +1,13 @@
 package snaykuu.userInterface;
 
-import snaykuu.gameLogic.*;
+import snaykuu.gameLogic.GameResult;
+import snaykuu.gameLogic.Session;
+
 import javax.swing.*;
-import javax.swing.filechooser.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.Map;
-import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 
 public class PostGameWindow extends JFrame
@@ -19,28 +20,28 @@ public class PostGameWindow extends JFrame
 	private JButton saveReplayButton;
 	private JButton exitButton;
 	private GameEndType gameEndType = null;
-	
+
 	public PostGameWindow(Session session)
 	{
 		super("SNAYKUU - results");
 		this.finalResult = session.getGameResult();
-		
+
 		newGameButton = new JButton("New game");
 		newGameButton.addActionListener(new NewGameButtonListener());
-		
+
 		rematchButton = new JButton("Rematch");
 		rematchButton.addActionListener(new RematchButtonListener());
-		
+
 		saveReplayButton = new JButton("Save replay");
 		saveReplayButton.addActionListener(new SaveReplayButtonListener());
-		
+
 		exitButton = new JButton("Exit");
 		exitButton.addActionListener(new CloseButtonListener());
-		
+
 		scoreBoardPanel = new ScoreBoardPanel(session);
 		scoreBoardPanel.setPreferredSize(scoreBoardPanel.getPreferredSize());
 		add(scoreBoardPanel, BorderLayout.CENTER);
-		
+
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(newGameButton);
 		buttonPanel.add(rematchButton);
@@ -48,23 +49,23 @@ public class PostGameWindow extends JFrame
 		buttonPanel.add(exitButton);
 		buttonPanel.setPreferredSize(buttonPanel.getPreferredSize());
 		add(buttonPanel, BorderLayout.SOUTH);
-		
+
 		pack();
 		setLocationRelativeTo(null);
 		setVisible(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		
+
 		printStandings();
-		
+
 		repaint();
 	}
-	
-	
+
+
 	private void printStandings()
 	{
 		scoreBoardPanel.updateScore(finalResult);
 	}
-	
+
 	static private void sleep(int ms)
 	{
 		try
@@ -76,7 +77,7 @@ public class PostGameWindow extends JFrame
 			System.out.println(e);
 		}
 	}
-	
+
 	public GameEndType getGameEndType()
 	{
 		while (true)
@@ -88,12 +89,12 @@ public class PostGameWindow extends JFrame
 			}
 			sleep(1);
 		}
-		
+
 		dispose();
-		
+
 		return gameEndType;
 	}
-	
+
 	private class NewGameButtonListener implements ActionListener
 	{
 		public void actionPerformed(ActionEvent event)
@@ -104,7 +105,7 @@ public class PostGameWindow extends JFrame
 			}
 		}
 	}
-	
+
 	private class RematchButtonListener implements ActionListener
 	{
 		public void actionPerformed(ActionEvent event)
@@ -115,31 +116,31 @@ public class PostGameWindow extends JFrame
 			}
 		}
 	}
-	
+
 	private class SaveReplayButtonListener implements ActionListener
 	{
 		public void actionPerformed(ActionEvent event)
 		{
 			JFileChooser fileChooser = new JFileChooser("./replays");
-			
+
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("Snaykuu Replay (.srp)", "srp");
 			fileChooser.setFileFilter(filter);
-			
+
 			int returnValue = fileChooser.showSaveDialog(PostGameWindow.this);
-				
+
 			if (returnValue != JFileChooser.APPROVE_OPTION)
 				return;
-			
+
 			File file = fileChooser.getSelectedFile();
-			
+
 			if(!file.getName().endsWith(".srp"))
 			{
 				file = new File(file.getParent(), file.getName()+".srp");
 			}
-			
+
 			try
 			{
-				finalResult.getRecordedGame().saveToFile(file);
+				finalResult.getRecordedGame().save(file);
 			}
 			catch (Exception e)
 			{
@@ -148,7 +149,7 @@ public class PostGameWindow extends JFrame
 			}
 		}
 	}
-	
+
 	private class CloseButtonListener implements ActionListener
 	{
 		public void actionPerformed(ActionEvent event)

@@ -124,8 +124,6 @@ class Board internal constructor(
     }
 
     internal fun removeAllSnakes(): List<Position> {
-        //  =
-        //        Board(width, height, squares.map { it and (Wall.value() + Fruit.value()) })
         return asSequence()
             .filter { it.second.hasSnake() }
             .map { it.first }
@@ -135,6 +133,17 @@ class Board internal constructor(
                 squares[index(it)] = newValue
             }
             .toList()
+    }
+
+    internal fun getAllSnakes(): Map<Int, List<Position>> {
+        return asSequence()
+            .filter { it.second.hasSnake() }
+            .map { it.second.snakeValues() to it.first }
+            .map { it.first.map { x -> x to it.second } }
+            .flatten()
+            .groupBy { it.first }
+            .map { it.key to it.value.map { x -> x.second } }
+            .toMap()
     }
 
     internal fun addSnake(snake: Snake): Boolean {

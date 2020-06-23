@@ -21,7 +21,7 @@ data class Square(private val value: Int = 0) {
     fun isLethal(): Boolean = value shr 1 != 0
     internal fun hasSnakeEatingFruit(): Boolean = hasFruit() && hasSnake() && !hasMultipleSnakes()
 
-    internal fun Square.snakeValues(): List<Int> {
+    internal fun snakeValues(): List<Int> {
         val snakeBitIdRange: IntRange = 3..32
         return snakeBitIdRange.asSequence()
             .map { 1 shl it }

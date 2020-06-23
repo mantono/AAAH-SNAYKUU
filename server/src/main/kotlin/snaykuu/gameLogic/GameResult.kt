@@ -4,8 +4,7 @@ import java.util.*
 
 class GameResult(
     private val snakes: Set<Snake>,
-    private val metadata: Metadata,
-    private val record: GameRecorder
+    private val recordedGame: RecordedGame
 ) {
     /**
      * Return the final position of all snakes as a [SortedMap], where the
@@ -14,6 +13,8 @@ class GameResult(
      * position.
      */
     fun getWinners(): SortedMap<Int, List<Snake>> = snakes.getLeaderboard()
+
+    fun getRecordedGame(): RecordedGame = recordedGame
 }
 
 fun Iterable<Snake>.getLeaderboard(): SortedMap<Int, List<Snake>> = this.asSequence()

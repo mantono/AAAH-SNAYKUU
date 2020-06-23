@@ -59,7 +59,6 @@ class GameRecorder(
     }
 
     fun save(): RecordedGame {
-        val snakeNames: Map<Int, String> = snakes.map { it.value() to it.getName() }.toMap()
-        return RecordedGame(metadata, snakeNames, buffer.toList())
+        return RecordedGame(metadata, snakes, buffer.toList())
     }
 }

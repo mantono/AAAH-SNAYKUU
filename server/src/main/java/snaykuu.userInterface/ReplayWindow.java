@@ -1,9 +1,14 @@
 package snaykuu.userInterface;
 
-import java.awt.*;
-import java.awt.event.*;
+import snaykuu.gameLogic.RecordedGame;
+import snaykuu.gameLogic.State;
+
 import javax.swing.*;
-import snaykuu.gameLogic.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class ReplayWindow extends JFrame
 {
@@ -13,38 +18,39 @@ public class ReplayWindow extends JFrame
 	private ScoreBoardPanel scoreBoardPanel;
 	private ControlPanel controlPanel;
 	private ReplayThread replayThread = new ReplayThread();
-	
+
 	public ReplayWindow(SettingsWindow settingsWindow, RecordedGame recordedGame)
 	{
 		this.settingsWindow = settingsWindow;
 		this.recordedGame = recordedGame;
-		
+
 		setLayout(new BorderLayout());
-		
+
 		gameBoard = new GameBoard(recordedGame, settingsWindow.getPixelsPerUnit());
 		controlPanel = new ControlPanel();
 		scoreBoardPanel = new ScoreBoardPanel(recordedGame);
-				
+
 		add(gameBoard, BorderLayout.CENTER);
 		add(controlPanel, BorderLayout.SOUTH);
 		add(scoreBoardPanel, BorderLayout.EAST);
 		pack();
-		
+
 		addWindowListener(new WindowListener());
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setVisible(true);
-		
+
 		replayThread.start();
 	}
-	
+
 	private void updateGame()
 	{
+		recordedGame.tick();
 		scoreBoardPanel.updateScore(recordedGame.getGameResult());
 		repaint();
 	}
-	
-	
+
+
 	private class WindowListener extends WindowAdapter
 	{
 		public void windowClosing(WindowEvent e)
@@ -53,8 +59,8 @@ public class ReplayWindow extends JFrame
 			dispose();
 		}
 	}
-	
-	
+
+
 	private class ControlPanel extends JPanel
 	{
 		private JButton beginButton = new JButton("<<");
@@ -62,7 +68,7 @@ public class ReplayWindow extends JFrame
 		private JButton play = new JButton("P");
 		private JButton forwardOneFrame = new JButton(">");
 		private JButton endButton = new JButton(">>");
-		
+
 		public ControlPanel()
 		{
 			beginButton.addActionListener(new BeginListener());
@@ -70,32 +76,33 @@ public class ReplayWindow extends JFrame
 			play.addActionListener(new PlayListener());
 			forwardOneFrame.addActionListener(new NextFrameListener());
 			endButton.addActionListener(new EndListener());
-			
+
 			add(beginButton);
 			add(backOneFrame);
 			add(play);
 			add(forwardOneFrame);
 			add(endButton);
 		}
-		
+
 		private class BeginListener implements ActionListener
 		{
 			public void actionPerformed(ActionEvent event)
 			{
-				recordedGame.setCurrentReplayFrame(0);
+				if(recordedGame.state() != State.NotStarted) {
+					throw new IllegalStateException("Invalid state " + recordedGame.state());
+				}
 				updateGame();
 			}
 		}
-		
+
 		private class PreviousFrameListener implements ActionListener
 		{
 			public void actionPerformed(ActionEvent event)
 			{
-				recordedGame.setCurrentReplayFrame(recordedGame.getCurrentReplayFrame() - 1);
 				updateGame();
 			}
 		}
-		
+
 		private class PlayListener implements ActionListener
 		{
 			public void actionPerformed(ActionEvent event)
@@ -103,47 +110,43 @@ public class ReplayWindow extends JFrame
 				replayThread.togglePause();
 			}
 		}
-		
+
 		private class NextFrameListener implements ActionListener
 		{
 			public void actionPerformed(ActionEvent event)
 			{
-				recordedGame.setCurrentReplayFrame(recordedGame.getCurrentReplayFrame() + 1);
 				updateGame();
 			}
 		}
-		
+
 		private class EndListener implements ActionListener
 		{
 			public void actionPerformed(ActionEvent event)
 			{
-				recordedGame.setCurrentReplayFrame(recordedGame.getTurnCount());
 				updateGame();
 			}
 		}
 	}
-	
-	
+
+
 	private class ReplayThread extends Thread
 	{
 		private boolean running = true;
 		private boolean paused = true;
-		
-		
+
+
 		public void run()
 		{
 			while (isRunning())
 			{
-				int currentFrame = recordedGame.getCurrentReplayFrame() + 1;
-				recordedGame.setCurrentReplayFrame(currentFrame);
 				updateGame();
-				
-				if (currentFrame >= recordedGame.getTurnCount() && !isPaused())
+
+				if (recordedGame.state() == snaykuu.gameLogic.State.Finished && !isPaused())
 					togglePause();
-				
+
 				while (isPaused())
 					ReplayWindow.sleep(10);
-				
+
 				try
 				{
 					ReplayWindow.sleep(settingsWindow.getGameSpeed());
@@ -154,29 +157,29 @@ public class ReplayWindow extends JFrame
 				}
 			}
 		}
-		
+
 		public synchronized void togglePause()
 		{
 			paused = !paused;
 		}
-		
+
 		public synchronized boolean isPaused()
 		{
 			return paused;
 		}
-		
+
 		public synchronized void stopRunning()
 		{
 			running = false;
 		}
-		
+
 		public synchronized boolean isRunning()
 		{
 			return running;
 		}
-		
+
 	}
-	
+
 	private static void sleep(long ms)
 	{
 		try
