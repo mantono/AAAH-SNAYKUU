@@ -1,8 +1,10 @@
 package snaykuu.gameLogic;
 
+import kotlin.Deprecated;
+
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The GameState is a representation of the game at a given moment in time. It contains references
@@ -62,6 +64,30 @@ public class GameState
 	{
 		return metadata;
 	}
+
+	/**
+	 * Returns the ErrorState for the previous turn, for example telling a brain it
+	 * took too long to decide last turn.
+	 *
+	 * @return	The ErrorState object for last turn.
+	 * @see 		ErrorState
+	 */
+	@Deprecated(message = "Use method 'getPreviousTurn' instead")
+	public ErrorState getErrorState()
+	{
+		if (TimeOut.INSTANCE.equals(getPreviousTurn())) {
+			return ErrorState.TOO_SLOW;
+		} else if (NotStarted.INSTANCE.equals(getPreviousTurn())) {
+			return ErrorState.NO_ERROR;
+		} else if (InvalidMove.INSTANCE.equals(getPreviousTurn())) {
+			return ErrorState.INVALID_MOVE;
+		} else if(getPreviousTurn() instanceof ThrewException) {
+			return ErrorState.EXCEPTION;
+		} else {
+			return ErrorState.NO_ERROR;
+		}
+	}
+
 
 	/**
 	 * Returns the Outcome for the previous turn, for example telling a brain it
@@ -197,5 +223,26 @@ public class GameState
 			directions.add(Direction.NORTH);
 
 		return directions;
+	}
+
+	/**
+	 * This method can be used to calculate the distance between two positions.
+	 *
+	 * @param 	from		The position from which you wish to calculate the distance.
+	 * @param	to		The position to which you wish to calculate the distance.
+	 * @return	An integer representing the distance between two positions.
+	 */
+	@Deprecated(message = "Use method on Position: 'getDistanceTo'")
+	public static int distanceBetween(Position from, Position to)
+	{
+		int distance = 0;
+
+		// Calculate distance in the x-axis
+		distance += Math.abs(from.getX() - to.getX());
+
+		// Calculate distance in the y-axis
+		distance += Math.abs(from.getY() - to.getY());
+
+		return distance;
 	}
 }

@@ -1,5 +1,3 @@
-package bot;
-
 import snaykuu.gameLogic.*;
 import java.util.ArrayList;
 import java.util.Set;
