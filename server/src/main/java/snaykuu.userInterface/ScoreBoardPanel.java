@@ -33,6 +33,7 @@ public class ScoreBoardPanel extends JPanel
 
 		printLegend(placedSnakes++);
 
+		// Replace with placements.forEach { ... }
 		for(int i = 0; i < placements.size(); ++i)
 		{
 			for(Snake snake : placements.get(i))
