@@ -1,6 +1,7 @@
 package snaykuu.userInterface;
 
 import snaykuu.gameLogic.Brain;
+import snaykuu.reflection.BotClassLoaderKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,10 +9,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.FilenameFilter;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static java.awt.GridBagConstraints.*;
@@ -138,59 +138,9 @@ class SnakeSettingsPanel extends JPanel
 
 	private String loadBrains()
 	{
-		ClassLoader parentClassLoader = MainWindow.class.getClassLoader();
-		BotClassLoader classLoader = new BotClassLoader(parentClassLoader);
-
-		FilenameFilter filter = new ClassfileFilter();
-		File botFolder = new File("./bot");
-		File[] listOfFiles = botFolder.listFiles(filter);
-
-		String loadedBrains = "";
-		for (File file : listOfFiles)
-		{
-			if (file.isDirectory())
-				continue;
-
-			String name = file.getName();
-			name = name.substring(0, name.lastIndexOf("."));
-
-			Class<?> c;
-			try
-			{
-				c = classLoader.getClass(name);
-			}
-			catch (Throwable e)
-			{
-				JOptionPane.showMessageDialog(this, e.toString());
-				continue;
-			}
-
-			Class<? extends Brain> brainClass;
-			try
-			{
-				brainClass = c.asSubclass(Brain.class);
-			}
-			catch (Exception e)
-			{
-				continue;
-			}
-
-			loadedBrains += name + '\n';
-			brains.put(name, brainClass);
-		}
-
-		brainJList.setListData(brains.keySet().toArray());
-
-		return loadedBrains;
-	}
-
-	static private class ClassfileFilter implements FilenameFilter
-	{
-		public boolean accept(File dir, String name)
-		{
-			name = name.substring(name.lastIndexOf("."), name.length());
-			return name.equalsIgnoreCase(".class");
-		}
+		Set<Class<? extends Brain>> brains = BotClassLoaderKt.getBrains();
+		brainJList.setListData(brains.toArray());
+		return brains.toString();
 	}
 
 
