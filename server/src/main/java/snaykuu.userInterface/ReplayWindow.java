@@ -188,6 +188,8 @@ public class ReplayWindow extends JFrame
 		}
 		catch (InterruptedException e)
 		{
+			System.err.println(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 }

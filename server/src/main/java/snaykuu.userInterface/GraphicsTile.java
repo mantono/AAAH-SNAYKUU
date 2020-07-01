@@ -33,6 +33,13 @@ enum GraphicsTile
 			image = ImageIO.read(temp);
 			imgHeight = image.getHeight(null);
 			imgWidth = image.getWidth(null);
+			if(imgWidth <= 0) {
+				throw new IllegalArgumentException("Width must be greater than 0");
+			}
+
+			if(imgHeight <= 0) {
+				throw new IllegalArgumentException("Height must be greater than 0");
+			}
 		}
 		catch(Exception e)
 		{

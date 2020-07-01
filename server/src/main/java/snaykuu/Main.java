@@ -5,7 +5,6 @@ import snaykuu.gameLogic.State;
 import snaykuu.userInterface.GameEndType;
 import snaykuu.userInterface.MainWindow;
 import snaykuu.userInterface.PostGameWindow;
-import snaykuu.userInterface.SettingsWindow;
 
 import javax.swing.*;
 
@@ -20,6 +19,8 @@ class Main
 		}
 		catch(Exception e)
 		{
+			System.err.println(e.getMessage());
+			e.printStackTrace();
 		}
 		SettingsWindow settingsWindow = new SettingsWindow();
 
@@ -107,6 +108,8 @@ class Main
 		}
 		catch (InterruptedException e)
 		{
+			System.err.println(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 }
