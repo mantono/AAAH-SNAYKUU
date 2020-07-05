@@ -103,7 +103,7 @@ class RecordedGame(
     companion object {
         private const val BUFFER_SIZE: Int = 128 * 128 * Int.SIZE_BYTES
         private const val SAVED_FILE_PREFIX = "snaykuu_"
-        private const val SAVED_FILE_SUFFIX = "sny"
+        const val SAVED_FILE_SUFFIX = "sny"
 
         private fun fileName(): File {
             val timestamp = LocalDateTime.now()

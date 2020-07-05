@@ -9,27 +9,27 @@ package snaykuu.gameLogic
  * @author	Sixten Hilborn
  * @author	Arian Jafari
  */
-data class Metadata(
+interface Metadata {
     /**
      * Gets the width of the game board.
      *
      * @return	The width of the board.
      */
-    val boardWidth: Int,
+    val boardWidth: Int
 
     /**
      * Gets the height of the game board.
      *
      * @return	The height of the board.
      */
-    val boardHeight: Int,
+    val boardHeight: Int
 
     /**
      * Gets the thinking time each snake has each turn, in milliseconds.
      *
      * @return	The thinking time in milliseconds.
      */
-    val maximumThinkingTime: Int,
+    val maximumThinkingTime: Int
 
     /**
      * Gets the number of turns it takes for snakes to grow. Note that this is
@@ -38,7 +38,7 @@ data class Metadata(
      *
      * @return	The frequency (in turns) with which snakes grow.
      */
-    val growthFrequency: Int,
+    val growthFrequency: Int
 
     /**
      * Gets the number of turns it takes for fruit to spawn. Note that this is
@@ -47,7 +47,7 @@ data class Metadata(
      *
      * @return	The frequency (in turns) with which snakes grow.
      */
-    val fruitFrequency: Int,
+    val fruitFrequency: Int
 
     /**
      * Gets the number of total fruit required to win the game.
@@ -55,7 +55,7 @@ data class Metadata(
      * @return	The number of fruit required to win the game.
      */
     val fruitGoal: Int
-) {
+
     /**
      * Gets the size of the board
      */

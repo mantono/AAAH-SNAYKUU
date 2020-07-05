@@ -1,5 +1,6 @@
 package snaykuu.userInterface
 
+import snaykuu.gameLogic.GameSettings
 import snaykuu.gameLogic.Session
 import snaykuu.gameLogic.Snake
 import snaykuu.gameLogic.Snake.Companion.create
@@ -11,17 +12,44 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.JTabbedPane
 
-class SettingsWindow : JFrame("SNAYKUU - settings") {
+class SettingsWindow(
+    gameSettings: GameSettings = GameSettings.load()
+): JFrame("SNAYKUU - settings") {
     @get:Synchronized
     var isDone = false
         private set
     private val tabbedPane: JTabbedPane
     private val snakeSettingsPanel: SnakeSettingsPanel
-    private val gameSettingsPanel: snaykuu.userInterface.GameSettingsPanel
+    private val gameSettingsPanel: GameSettingsPanel
     private val replayPanel: ReplayPanel
     private val developerPanel: DeveloperPanel
     private val startButton: JButton
     private val startButtonPanel: JPanel
+
+    init {
+        layout = BorderLayout()
+        tabbedPane = JTabbedPane()
+
+        snakeSettingsPanel = SnakeSettingsPanel()
+        gameSettingsPanel = GameSettingsPanel(gameSettings)
+        replayPanel = ReplayPanel(this)
+        developerPanel = DeveloperPanel(this)
+
+        tabbedPane.addTab("Snayks", snakeSettingsPanel)
+        tabbedPane.addTab("Game settings", gameSettingsPanel)
+        tabbedPane.addTab("Replay", replayPanel)
+        tabbedPane.addTab("Developer", developerPanel)
+
+        startButton = JButton("Start")
+        startButton.addActionListener(StartButtonListener())
+        startButtonPanel = JPanel()
+        startButtonPanel.add(startButton)
+
+        add(tabbedPane, BorderLayout.CENTER)
+        add(startButtonPanel, BorderLayout.SOUTH)
+        setSize(600, 400)
+        defaultCloseOperation = EXIT_ON_CLOSE
+    }
 
     fun putThisDamnWindowInMyFace() {
         isDone = false
@@ -45,33 +73,8 @@ class SettingsWindow : JFrame("SNAYKUU - settings") {
     }
 
     val gameSpeed: Int
-        get() = gameSettingsPanel.gameSpeed
+        get() = gameSettingsPanel.getGameSpeed()
 
     val pixelsPerUnit: Int
-        get() = gameSettingsPanel.pixelsPerUnit
-
-    init {
-        layout = BorderLayout()
-        tabbedPane = JTabbedPane()
-
-        snakeSettingsPanel = SnakeSettingsPanel()
-        gameSettingsPanel = GameSettingsPanel()
-        replayPanel = ReplayPanel(this)
-        developerPanel = DeveloperPanel(this)
-
-        tabbedPane.addTab("Snayks", snakeSettingsPanel)
-        tabbedPane.addTab("Game settings", gameSettingsPanel)
-        tabbedPane.addTab("Replay", replayPanel)
-        tabbedPane.addTab("Developer", developerPanel)
-
-        startButton = JButton("Start")
-        startButton.addActionListener(StartButtonListener())
-        startButtonPanel = JPanel()
-        startButtonPanel.add(startButton)
-
-        add(tabbedPane, BorderLayout.CENTER)
-        add(startButtonPanel, BorderLayout.SOUTH)
-        setSize(600, 400)
-        defaultCloseOperation = EXIT_ON_CLOSE
-    }
+        get() = gameSettingsPanel.getPixelsPerUnit()
 }
