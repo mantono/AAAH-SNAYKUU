@@ -8,7 +8,6 @@ import javax.swing.JButton
 import javax.swing.JFileChooser
 import javax.swing.JOptionPane
 import javax.swing.JPanel
-import javax.swing.filechooser.FileNameExtensionFilter
 
 class ReplayPanel(
     private val settingsWindow: SettingsWindow
@@ -31,9 +30,7 @@ class ReplayPanel(
     private inner class ReplayListener: ActionListener {
         override fun actionPerformed(event: ActionEvent) {
             val fileChooser = JFileChooser("./replays")
-
-            val filter = FileNameExtensionFilter("Snaykuu Replay (.${RecordedGame.SAVED_FILE_SUFFIX})", RecordedGame.SAVED_FILE_SUFFIX)
-            fileChooser.fileFilter = filter
+            fileChooser.fileFilter = RecordedGame.fileNameFilter()
 
             val returnValue = fileChooser.showOpenDialog(parent)
             if(returnValue != JFileChooser.APPROVE_OPTION) return

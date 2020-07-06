@@ -160,6 +160,14 @@ class Board internal constructor(
         return currentValue != newValue
     }
 
+    fun changes(otherBoard: Board): List<Pair<Position, Square>> {
+        return this.asSequence()
+            .zip(otherBoard.asSequence())
+            .filter { it.first.second != it.second.second }
+            .map { it.second.first to it.second.second }
+            .toList()
+    }
+
     override fun iterator(): Iterator<Pair<Position, Square>> = this.squares
         .asSequence()
         .mapIndexed { i: Int, value: Int -> Position(i % width, i / height) to Square(value) }

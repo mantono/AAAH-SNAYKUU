@@ -6,11 +6,11 @@ import java.io.FileInputStream
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import java.awt.Color
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.swing.filechooser.FileNameExtensionFilter
 
 class RecordedGame(
     private val metadata: Metadata,
@@ -29,13 +29,39 @@ class RecordedGame(
     override fun getCurrentState(): GameState {
         val i: Int = turn.coerceIn(0, frames.lastIndex)
         val currentBoard: Board = frames[i]
-        updateSnakes(currentBoard)
+        val previousBoard: Board = frames.getOrNull(i - 1) ?: currentBoard
+        val snakeMoves: List<Pair<Position, Square>> = previousBoard.changes(currentBoard)
+        moveSnakes(snakeMoves)
+        updateSnakeStates(currentBoard)
         return GameState(currentBoard, snakes, metadata, NotStarted)
     }
 
-    private fun updateSnakes(board: Board) {
-        board.getAllSnakes().asSequence()
-            .forEach { snakes }
+    private fun moveSnakes(changes: List<Pair<Position, Square>>) {
+        val snakesWithIds: Map<Int, Snake> = snakes.map { it.value() to it }.toMap()
+        val snakeMoves: Map<Snake, M>
+        changes.asSequence()
+            .map { (position, square) ->
+                square.snakeValues().map { it to position }
+                //snakes.first { snake -> square.contains(snake) }
+            }
+            .flatten()
+
+    }
+
+    private fun updateSnakeStates(board: Board) {
+        snakes.forEach { snake: Snake ->
+            val head: Position = snake.getHeadPosition()
+            val square: Square = board.getSquare(head)
+            when {
+                square.hasMultipleSnakes() -> snake.kill()
+                square.hasWall() -> snake.kill()
+                square.hasFruit() -> {
+                    snake.addScore()
+                    snake.increaseLifespan()
+                }
+                else -> snake.increaseLifespan()
+            }
+        }
     }
 
     override fun state(): State {
@@ -104,6 +130,9 @@ class RecordedGame(
         private const val BUFFER_SIZE: Int = 128 * 128 * Int.SIZE_BYTES
         private const val SAVED_FILE_PREFIX = "snaykuu_"
         const val SAVED_FILE_SUFFIX = "sny"
+
+        internal fun fileNameFilter(): FileNameExtensionFilter =
+            FileNameExtensionFilter("Snaykuu Replay (.$SAVED_FILE_SUFFIX)", SAVED_FILE_SUFFIX)
 
         private fun fileName(): File {
             val timestamp = LocalDateTime.now()

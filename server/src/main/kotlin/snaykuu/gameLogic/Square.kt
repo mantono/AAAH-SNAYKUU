@@ -43,7 +43,7 @@ data class Square(private val value: Int = 0) {
         return state.snakes.filter { it.value() in snakeValues }
     }
 
-    operator fun Square.contains(obj: GameObject): Boolean = (value and obj.value()) != 0
+    operator fun contains(obj: GameObject): Boolean = (value and obj.value()) != 0
 
     operator fun plus(obj: GameObject): Square = Square(value or obj.value())
     operator fun minus(obj: GameObject): Square = Square(value and obj.value().inv())
