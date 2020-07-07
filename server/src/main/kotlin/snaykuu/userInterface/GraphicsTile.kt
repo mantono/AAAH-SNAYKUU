@@ -7,6 +7,7 @@ import java.awt.Image
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.net.URL
+import java.nio.file.Paths
 import javax.imageio.ImageIO
 
 enum class GraphicsTile(private val path: String) {
@@ -33,8 +34,9 @@ enum class GraphicsTile(private val path: String) {
     }
 
     private fun loadImage(path: String): Image {
-        val temp: URL = javaClass.getResource("img/$path")
-        return ImageIO.read(temp)
+        val url = Paths.get("src", "main", "resources", "img", path).toUri().toURL()
+        //val temp: URL = javaClass.getResource("img/$path")
+        return ImageIO.read(url)
     }
 
     open fun getImage(c: Color): Image? {

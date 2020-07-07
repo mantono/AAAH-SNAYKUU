@@ -14,7 +14,7 @@ enum class Direction(private val x: Int, private val y: Int) {
      * @param	from The current position of the snake.
      * @return	The next position if movement continues in this direction.
      */
-    fun calculateNextPosition(from: Position): Position = from.turn(this)
+    fun calculateNextPosition(from: Position): Position = Position(from.x + this.x, from.y + this.y)
 
     /**
      * Returns a new direction that would be the same as turning left.

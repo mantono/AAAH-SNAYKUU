@@ -11,6 +11,10 @@ import javax.swing.JTextField
 import javax.swing.SwingConstants
 
 class GameSettingsPanel(private val gameSettings: GameSettings): JPanel() {
+    private val gridbag: GridBagLayout = GridBagLayout()
+    private val fieldC: GridBagConstraints = GridBagConstraints()
+    private val labelC: GridBagConstraints = GridBagConstraints()
+
     private val boardWidth: JTextField = addRow("Board width", gameSettings.boardWidth - 2)
     private val boardHeight: JTextField = addRow("Board height", gameSettings.boardHeight - 2)
     private val pixelsPerUnit: JTextField = addRow("Pixels per square", gameSettings.pixelsPerSquare)
@@ -19,10 +23,6 @@ class GameSettingsPanel(private val gameSettings: GameSettings): JPanel() {
     private val fruitGoal: JTextField = addRow("Fruits to win", gameSettings.fruitGoal)
     private val thinkingTime: JTextField = addRow("Thinking time (ms/frame)", gameSettings.maximumThinkingTime)
     private val gameSpeed: JTextField = addRow("Game speed (ms/frame)", gameSettings.gameSpeed)
-
-    private val gridbag: GridBagLayout = GridBagLayout()
-    private val fieldC: GridBagConstraints = GridBagConstraints()
-    private val labelC: GridBagConstraints = GridBagConstraints()
 
     init {
         layout = gridbag

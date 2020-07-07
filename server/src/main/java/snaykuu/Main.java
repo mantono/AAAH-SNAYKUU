@@ -2,8 +2,10 @@ package snaykuu;
 
 import snaykuu.gameLogic.Session;
 import snaykuu.gameLogic.State;
+import snaykuu.userInterface.GameEndType;
 import snaykuu.userInterface.MainWindow;
 import snaykuu.userInterface.PostGameWindow;
+import snaykuu.userInterface.SettingsWindow;
 
 import javax.swing.*;
 
