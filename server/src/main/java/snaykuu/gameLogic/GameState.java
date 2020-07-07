@@ -198,7 +198,7 @@ public class GameState
 
 	/**
 	 * Returns in which direction one has to move in order to reach one
-	 * position from another one. Returns an ArrayList containing either one
+	 * position from another one. Returns an ArrayList containing either zero, one
 	 * or two elements. For example, it might contain either only <code>WEST</code>
 	 * if the destination postion is directly west of the starting position, or it
 	 * may contain both <code>WEST</code> and <code>NORTH</code> if
@@ -206,7 +206,7 @@ public class GameState
 	 *
 	 * @param	from		The starting position.
 	 * @param	to		The destination position.
-	 * @return	containing either one or two Directions, pointing towards
+	 * @return	containing either zero, one or two Directions, pointing towards
 	 *			the destination.
 	 */
 	public static ArrayList<Direction> getRelativeDirections(Position from, Position to)

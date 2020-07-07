@@ -106,10 +106,26 @@ data class Snake @JvmOverloads constructor(
 //        return this.copy(segments = segments, directionLog = directionLog + newDirections)
 //    }
 
-    internal fun moveHead(dir: Direction) {
+    internal fun moveHead(dir: Direction): Boolean {
         val pos: Position = dir.calculateNextPosition(getHeadPosition())
+        return moveHead(pos, dir)
+    }
+
+    internal fun moveHead(pos: Position): Boolean {
+        val dir: Direction = GameState.getRelativeDirections(getHeadPosition(), pos).first()
+        return moveHead(pos, dir)
+    }
+
+    private fun moveHead(pos: Position, dir: Direction): Boolean {
+        if(pos == getHeadPosition()) {
+            return false
+        }
+        require(getHeadPosition().getDistanceTo(pos) == 1) {
+            "Cannot move the head more than one square at a time"
+        }
         segments.push(pos)
         directionLog.push(SnakeSegment(pos, dir))
+        return true
     }
 
     internal fun removeTail() {

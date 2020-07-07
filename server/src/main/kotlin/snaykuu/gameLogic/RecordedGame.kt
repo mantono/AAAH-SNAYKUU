@@ -30,22 +30,28 @@ class RecordedGame(
         val i: Int = turn.coerceIn(0, frames.lastIndex)
         val currentBoard: Board = frames[i]
         val previousBoard: Board = frames.getOrNull(i - 1) ?: currentBoard
-        val snakeMoves: List<Pair<Position, Square>> = previousBoard.changes(currentBoard)
+        val snakeMoves: Map<Position, Square> = previousBoard.changes(currentBoard).toMap()
         moveSnakes(snakeMoves)
         updateSnakeStates(currentBoard)
         return GameState(currentBoard, snakes, metadata, NotStarted)
     }
 
-    private fun moveSnakes(changes: List<Pair<Position, Square>>) {
-        val snakesWithIds: Map<Int, Snake> = snakes.map { it.value() to it }.toMap()
-        val snakeMoves: Map<Snake, M>
-        changes.asSequence()
-            .map { (position, square) ->
-                square.snakeValues().map { it to position }
-                //snakes.first { snake -> square.contains(snake) }
-            }
-            .flatten()
+    private fun moveSnakes(changes: Map<Position, Square>) {
+        snakes.forEach { applyChangesToSnake(it, changes) }
+    }
 
+    private fun applyChangesToSnake(snake: Snake, changes: Map<Position, Square>) {
+        val head: Position = changes.asSequence()
+            .filter { it.key !in snake.getSegments() }
+            .firstOrNull { it.value.contains(snake) }
+            ?.key ?: return
+
+        snake.moveHead(head)
+
+        val tailSquare: Square = changes[snake.getTailPosition()] ?: return
+        if(snake !in tailSquare) {
+            snake.removeTail()
+        }
     }
 
     private fun updateSnakeStates(board: Board) {
