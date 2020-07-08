@@ -188,7 +188,7 @@ class Session @JvmOverloads constructor(
      * is defaulted to Direction.FORWARD.
      *
      * @see		BrainDecision
-     * @return 	The HashMap containing snakes and their next moves.
+     * @return 	The HashMap containing living snakes and their next moves.
      */
     private fun getDecisionsFromSnakes(): Map<Snake, Direction> {
         val decisionThreads: Map<Snake, BrainDecision> = snakes.asSequence()
@@ -239,10 +239,10 @@ class Session @JvmOverloads constructor(
      *
      * @param	moves		Map of each snake to its desired movement.
      * @param	growSnakes	Whether or not snakes are supposed to grow this turn.
+     * @return A list of positions which has been changed due to snakes moving
      */
-    private fun moveAllSnakes(moves: Map<Snake, Direction>, growSnakes: Boolean) {
-        moves.forEach { moveSnake(it.key, it.value, growSnakes) }
-    }
+    private fun moveAllSnakes(moves: Map<Snake, Direction>, growSnakes: Boolean): List<Position> =
+        moves.map { moveSnake(it.key, it.value, growSnakes) }.flatten()
 
     /**
      * Moves a single snake in the specified direction and grows the snake if necessary.
@@ -252,11 +252,13 @@ class Session @JvmOverloads constructor(
      * @param	snake	The snake that is going to be moved.
      * @param	dir		The direction in which the snake is to be moved.
      * @param	grow	Whether or not the snake is supposed to grow this turn.
+     * @return  Positions changed by the move of the snake
      */
-    private fun moveSnake(snake: Snake, dir: Direction, grow: Boolean) {
-        snake.moveHead(dir)
-        if(!grow) {
-            snake.removeTail()
+    private fun moveSnake(snake: Snake, dir: Direction, grow: Boolean): List<Position> {
+        return if(!grow) {
+            listOf(snake.moveHead(dir), snake.removeTail())
+        } else {
+            listOf(snake.moveHead(dir))
         }
     }
     /**
@@ -266,10 +268,11 @@ class Session @JvmOverloads constructor(
      * added to that snake's score.
      */
     private fun updateSnakeStates() {
-        snakes.forEach { snake: Snake ->
+        snakes.filter { !it.isDead() }.forEach { snake: Snake ->
             val head: Position = snake.getHeadPosition()
             val square: Square = board.getSquare(head)
             when {
+                snake.hasOverlap() -> snake.kill()
                 square.hasMultipleSnakes() -> snake.kill()
                 square.hasWall() -> snake.kill()
                 square.hasFruit() -> {
@@ -284,6 +287,8 @@ class Session @JvmOverloads constructor(
     private fun updateBoardState(moves: Map<Snake, Direction>) {
         moveAllSnakes(moves, growSnakes())
         updateSnakeStates()
+        board.removeAllSnakes()
+        snakes.forEach { board.addSnake(it) }
 
         board.asSequence()
             .filter { it.second.hasSnakeEatingFruit() }

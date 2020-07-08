@@ -112,7 +112,7 @@ class Board internal constructor(
 
     internal fun add(position: Position, obj: GameObject): Boolean {
         val currentValue: Int = this[position].toInt()
-        val newValue: Int = currentValue and (obj.value())
+        val newValue: Int = currentValue or (obj.value())
         this[position] = newValue
         return currentValue != newValue
     }
@@ -147,7 +147,7 @@ class Board internal constructor(
     }
 
     internal fun addSnake(snake: Snake): Boolean {
-        require(snake.size > 0) { "Cannot add an empty snake" }
+        require(snake.size() > 0) { "Cannot add an empty snake" }
         return snake.getSegments()
             .map { add(it, snake) }
             .any()
@@ -206,7 +206,7 @@ class Board internal constructor(
         }
 
         private fun addWalls(board: Array<Int>, width: Int, height: Int) {
-            board.asSequence()
+            board.indices.asSequence()
                 .filter { i ->
                     when {
                         // North wall
@@ -226,5 +226,5 @@ class Board internal constructor(
 }
 
 internal operator fun GameObject.plus(other: GameObject): Int {
-    return this.value() + other.value()
+    return this.value() or other.value()
 }

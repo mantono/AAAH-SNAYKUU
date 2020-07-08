@@ -29,7 +29,7 @@ data class Snake @JvmOverloads constructor(
     /**
      * Get the size of the snake
      */
-    val size: Int = segments.size
+    fun size(): Int = segments.size
 
     /**
      * Get a list of all the squares this snake has occupied.
@@ -65,6 +65,11 @@ data class Snake @JvmOverloads constructor(
      */
     fun getTailPosition(): Position = segments.firstOrNull()
         ?: throw IllegalStateException("Function called before snake had a tail position")
+
+    /**
+     * Returns true if a Snake has collided with itself, and is effectively dead.
+     */
+    fun hasOverlap(): Boolean = getSegments().distinct().size < getSegments().size
 
     /**
      * Returns whether or not this snake is dead. Note that a dead snake won't be
@@ -106,31 +111,29 @@ data class Snake @JvmOverloads constructor(
 //        return this.copy(segments = segments, directionLog = directionLog + newDirections)
 //    }
 
-    internal fun moveHead(dir: Direction): Boolean {
+    internal fun moveHead(dir: Direction): Position {
         val pos: Position = dir.calculateNextPosition(getHeadPosition())
         return moveHead(pos, dir)
     }
 
-    internal fun moveHead(pos: Position): Boolean {
+    internal fun moveHead(pos: Position): Position {
         val dir: Direction = GameState.getRelativeDirections(getHeadPosition(), pos).first()
         return moveHead(pos, dir)
     }
 
-    private fun moveHead(pos: Position, dir: Direction): Boolean {
+    private fun moveHead(pos: Position, dir: Direction): Position {
         if(pos == getHeadPosition()) {
-            return false
+            return pos
         }
         require(getHeadPosition().getDistanceTo(pos) == 1) {
             "Cannot move the head more than one square at a time"
         }
         segments.push(pos)
         directionLog.push(SnakeSegment(pos, dir))
-        return true
+        return pos
     }
 
-    internal fun removeTail() {
-        segments.removeLast()
-    }
+    internal fun removeTail(): Position = segments.removeLast()
 
     internal fun initAt(head: Position, facing: Direction) {
         check(!isDead())

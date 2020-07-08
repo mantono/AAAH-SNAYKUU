@@ -10,6 +10,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.geom.AffineTransform
 import javax.swing.JComponent
 
 class GameBoard(
@@ -73,7 +74,8 @@ class GameBoard(
 
         for(s in gs.snakes) {
             snakeTiles(s).forEach { (tile, direction, position) ->
-                tile.getTransformation(direction, position, pixelsPerXUnit, pixelsPerYUnit)
+                val transform: AffineTransform? = tile.getTransformation(direction, position, pixelsPerXUnit, pixelsPerYUnit)
+                g2d.drawImage(tile.getImage(s.getColor()), transform, null)
             }
         }
 
