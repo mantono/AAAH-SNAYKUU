@@ -68,8 +68,8 @@ class Session @JvmOverloads constructor(
      * @return	An array of starting positions with as many elements as the number of snakes in the game.
      */
     private fun startingHeadPositions(snakes: Int, width: Int, height: Int): List<Position> {
-        val xCenter: Int = width/2
-        val yCenter: Int = height/2
+        val xCenter: Int = (width / 2) - 1
+        val yCenter: Int = height / 2
         val edgeOffset: Int = 2
 
         val angleStep: Double = 2 * Math.PI / snakes
@@ -91,10 +91,10 @@ class Session @JvmOverloads constructor(
         val p = Position(position.x - width/2, position.y - height/2)
 
         return when {
-            p.x < 0 && p.y < 0 -> Direction.NORTH
-            p.x < 0 && p.y >= 0 -> Direction.WEST
-            p.x >= 0 && p.y < 0 -> Direction.EAST
-            p.x >= 0 && p.y >= 0 -> Direction.SOUTH
+            p.x < 0 && p.y < 0 -> Direction.SOUTH
+            p.x < 0 && p.y >= 0 -> Direction.EAST
+            p.x >= 0 && p.y < 0 -> Direction.WEST
+            p.x >= 0 && p.y >= 0 -> Direction.NORTH
             else -> error("Cannot determine direction to face for position: $position")
         }
     }
@@ -286,9 +286,9 @@ class Session @JvmOverloads constructor(
 
     private fun updateBoardState(moves: Map<Snake, Direction>) {
         moveAllSnakes(moves, growSnakes())
-        updateSnakeStates()
         board.removeAllSnakes()
         snakes.forEach { board.addSnake(it) }
+        updateSnakeStates()
 
         board.asSequence()
             .filter { it.second.hasSnakeEatingFruit() }

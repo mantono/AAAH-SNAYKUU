@@ -16,14 +16,14 @@ import java.util.*
  */
 data class Snake @JvmOverloads constructor(
     private val id: Int,
-    private val name: String,
+    private val name: String = "Snake $id",
     private var brain: Brain = BrainDead,
     private val segments: LinkedList<Position> = LinkedList(),
     private val directionLog: LinkedList<SnakeSegment> = LinkedList(),
     private var score: Int = 0,
     private var lifespan: Int = 0,
     private var isDead: Boolean = false,
-    private val color: Color
+    private val color: Color = Color.BLACK
 ): GameObject, SerializableSnake {
 
     /**

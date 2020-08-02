@@ -17,26 +17,19 @@ data class Square(private val value: Int = 0) {
     fun hasFruit(): Boolean = Fruit in this
     fun hasWall(): Boolean = Wall in this
     fun hasSnake(): Boolean = value shr 2 != 0
-    fun hasMultipleSnakes(): Boolean = snakeValues().size > 1
+    fun hasMultipleSnakes(): Boolean = Integer.bitCount(value shr 2) > 1
     fun isLethal(): Boolean = value shr 1 != 0
     internal fun hasSnakeEatingFruit(): Boolean = hasFruit() && hasSnake() && !hasMultipleSnakes()
     internal fun removeSnakes(): Square = Square(value and (Wall + Fruit))
 
     internal fun snakeValues(): List<Int> {
-
         if(value <= 3) {
             return emptyList()
         }
         val snakeBitIdRange: IntRange = 3..32
         return snakeBitIdRange.asSequence()
-            .map {
-                println("1 << $it = ${1 shl it}")
-                1 shl it
-            }
-            .map {
-                println("$value and $it = ${value and it}")
-                value and it
-            }
+            .map { 1 shl it }
+            .map { value and it }
             .filter { it != 0 }
             .toList()
     }

@@ -86,8 +86,8 @@ class GameBoard(
     }
 
     private fun snakeTiles(snake: Snake): List<Triple<GraphicsTile, Direction, Position>> {
-        val positions: List<Position> = snake.getDrawData().map { it.pos }.toList()
-        val rawDirections: List<Direction> = snake.getDrawData().map { it.dir }.toList()
+        val positions: List<Position> = snake.getSegments()
+        val rawDirections: List<Direction> = snake.getDrawData().take(snake.size()).map { it.dir }
         return rawDirections.threeWayZip()
             .asSequence()
             .mapIndexed { i, (previous, current, next) ->
