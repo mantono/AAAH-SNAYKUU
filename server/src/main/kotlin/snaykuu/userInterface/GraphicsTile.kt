@@ -96,7 +96,7 @@ enum class GraphicsTile(private val path: String) {
                     translationCorrector[1] = -1f
                     scaleAdjuster[1] = 1f
                 }
-                else -> {
+                Direction.EAST -> {
                     flatmatrix[0] += 1f
                     flatmatrix[3] += 1f
                     translationCorrector[0] = -1f

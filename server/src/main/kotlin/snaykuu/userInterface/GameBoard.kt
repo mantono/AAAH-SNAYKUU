@@ -93,7 +93,11 @@ class GameBoard(
             .mapIndexed { i, (previous, current, next) ->
                 val tile: GraphicsTile = resolveTile(previous, current, next, snake.isDead())
                 val position: Position = positions[i]
-                Triple(tile, current, position)
+                if(tile == GraphicsTile.SNAKETAIL) {
+                    Triple(tile, previous ?: current, position)
+                } else {
+                    Triple(tile, current, position)
+                }
             }
             .toList()
     }
@@ -114,8 +118,8 @@ class GameBoard(
             !hasPrevious && isDead -> GraphicsTile.SNAKEDEAD
             !hasPrevious && !isDead -> GraphicsTile.SNAKEHEAD
             !hasNext -> GraphicsTile.SNAKETAIL
-            isBody && previous!!.turnLeft() == current -> GraphicsTile.SNAKERIGHT
-            isBody && previous!!.turnRight() == current -> GraphicsTile.SNAKELEFT
+            isBody && previous!!.turnLeft() == current -> GraphicsTile.SNAKELEFT
+            isBody && previous!!.turnRight() == current -> GraphicsTile.SNAKERIGHT
             else -> GraphicsTile.SNAKEBODY
         }
     }
