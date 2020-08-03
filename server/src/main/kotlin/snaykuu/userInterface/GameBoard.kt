@@ -78,7 +78,8 @@ class GameBoard(
         for(s in gs.snakes) {
             snakeTiles(s).forEach { (tile, direction, position) ->
                 val transform: AffineTransform? = tile.getTransformation(direction, position, pixelsPerXUnit, pixelsPerYUnit)
-                g2d.drawImage(tile.getImage(s.getColor()), transform, null)
+                val color = s.getColor().let { Color(it.red.toInt(), it.green.toInt(), it.blue.toInt()) }
+                g2d.drawImage(tile.getImage(color), transform, null)
             }
         }
 

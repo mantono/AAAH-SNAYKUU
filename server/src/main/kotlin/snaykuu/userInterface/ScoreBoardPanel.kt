@@ -59,7 +59,7 @@ class ScoreBoardPanel(game: Game): JPanel() {
         val color = JLabel("   ")
         color.preferredSize = color.preferredSize
         color.isOpaque = true
-        color.background = s.getColor()
+        color.background = s.getColor().asAWTColor()
         gbl.setConstraints(color, c)
         add(color)
 

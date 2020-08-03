@@ -1,7 +1,10 @@
 package snaykuu.gameLogic
 
-import java.awt.Color
+import kotlinx.coroutines.flow.callbackFlow
 import java.util.*
+import java.awt.Color as AwtColor
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * The Snake class is a representation of each snake currently in the game,
@@ -23,7 +26,7 @@ data class Snake @JvmOverloads constructor(
     private var score: Int = 0,
     private var lifespan: Int = 0,
     private var isDead: Boolean = false,
-    private val color: Color = Color.BLACK
+    private val color: Color = Color()
 ): GameObject, SerializableSnake {
 
     /**
@@ -172,29 +175,19 @@ data class Snake @JvmOverloads constructor(
     override fun isLethal(): Boolean = true
 
     companion object {
-        private fun colorForSnake(
-            rand: Random,
-            i: Int,
-            stepSize: Float
-        ): Color {
-            val hue: Float = stepSize * i
-            val saturation: Float = rand.nextFloat() / 2 + 0.5f
-            val brightness: Float = rand.nextFloat() / 2 + 0.5f
-            return Color.getHSBColor(hue, saturation, brightness)
+        private fun colorForSnake(i: Int, stepSize: Float): Color {
+            val red = Color(255, 0, 0)
+            return red.changeHue(i * stepSize)
         }
 
-        @JvmOverloads
-        fun create(
-            snakeData: Map<String, Brain?>,
-            random: Random = Random(4L)
-        ): MutableSet<Snake> {
+        fun create(snakeData: Map<String, Brain?>): MutableSet<Snake> {
             val numSnakes: Int = snakeData.size
-            val stepSize: Float = 0.8f / numSnakes
+            val stepSize: Float = 360f / numSnakes
             return snakeData.asSequence()
                 .sortedBy { it.key }
                 .mapIndexed { index, entry ->
                     val brain: Brain = entry.value ?: BrainDead
-                    val color = colorForSnake(random, index, stepSize)
+                    val color = colorForSnake(index, stepSize)
                     Snake(index, entry.key, brain, color = color)
                 }
                 .toMutableSet()
@@ -206,4 +199,74 @@ private object BrainDead: Brain {
     override fun getNextMove(yourSnake: Snake, gameState: GameState): Nothing {
         throw IllegalStateException("This brain should not be called")
     }
+}
+
+data class Color(
+    val red: Short = 0,
+    val green: Short = 0,
+    val blue: Short = 0
+) {
+    init {
+        require(red <= 255)
+        require(green <= 255)
+        require(blue <= 255)
+    }
+
+    constructor(red: Int, green: Int, blue: Int):
+        this((red % 256).toShort(), (green % 256).toShort(), (blue % 256).toShort())
+
+    fun changeHue(degrees: Float): Color {
+        val r: Float = red / 255f
+        val g: Float = green / 255f
+        val b: Float = blue / 255f
+
+        val min: Float = minOf(r, g, b)
+        val max: Float = maxOf(r, g, b)
+
+        val luminance: Float = (min + max) / 2
+        val saturation: Float = if(luminance < 0.5f) {
+            (max - min) / (max - min)
+        } else {
+            (max - min) / (2.0f - max - min)
+        }
+
+        val delta: Float = max - min
+        val hue: Float = when {
+            max == r -> (g - b) / delta
+            max == g -> 2.0f + (b - r) / delta
+            max == b -> 4.0f + (r - g) / delta
+            else -> error("$red, $green, $blue")
+        }
+
+        val hueDegrees: Float = ((hue * 60f) + 360f) % 360f
+        val newHue: Float = (hueDegrees + degrees) % 360f
+
+        val temp1: Float = if(luminance < 0.5f) {
+            luminance * (1.0f + saturation)
+        } else {
+            luminance + saturation - (luminance * saturation)
+        }
+
+        val temp2: Float = 2f * luminance - temp1
+        val hueFraction: Float = newHue / 360f
+
+        val tempR = (hueFraction + 0.333f) % 1f
+        val tempG = hueFraction
+        val tempB = (hueFraction - 0.333f + 1f) % 1f
+
+        val channels: List<Int> = sequenceOf(tempR, tempG, tempB).map { v: Float ->
+            when {
+                6f * v < 1f -> temp2 + (temp1 - temp2) * 6f * v
+                2f * v < 1f -> temp1
+                3f * v < 2f -> temp2 + (temp1 - temp2) * (0.666f - v) * 6f
+                else -> temp2
+            }
+        }
+            .map { (it * 255f).roundToInt() }
+            .toList()
+
+        return Color(channels[0], channels[1], channels[2])
+    }
+
+    fun asAWTColor(): java.awt.Color = java.awt.Color(red.toInt(), green.toInt(), blue.toInt())
 }
