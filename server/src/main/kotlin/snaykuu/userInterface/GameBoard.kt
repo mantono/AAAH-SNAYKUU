@@ -1,5 +1,6 @@
 package snaykuu.userInterface
 
+import mu.KotlinLogging
 import snaykuu.gameLogic.Direction
 import snaykuu.gameLogic.Game
 import snaykuu.gameLogic.Position
@@ -23,6 +24,8 @@ class GameBoard(
     private var boardHeight: Int = game.getMetadata().boardHeight
     private var graphicsWidth: Int = computeGraphics(boardWidth, pixelsPerXUnit)
     private var graphicsHeight: Int = computeGraphics(boardHeight, pixelsPerYUnit)
+
+    private val log = KotlinLogging.logger("GameBoard")
 
     /*
      * The grid needs space to be in that is not inside a game square.
@@ -67,7 +70,7 @@ class GameBoard(
         //Image drawing.
         val g2d = g as Graphics2D
 
-        for(wall in gs.walls) {
+        for(wall in gs.getWalls()) {
             val icon = GraphicsTile.WALL
             g2d.drawImage(icon.getImage(), icon.getTransformation(null, wall, pixelsPerXUnit, pixelsPerYUnit), null)
         }
@@ -79,7 +82,8 @@ class GameBoard(
             }
         }
 
-        for(fruit in gs.fruits) {
+        log.info { gs.getFruits() }
+        for(fruit in gs.getFruits()) {
             val icon = GraphicsTile.FRUIT
             g2d.drawImage(icon.getImage(), icon.getTransformation(null, fruit, pixelsPerXUnit, pixelsPerYUnit), null)
         }

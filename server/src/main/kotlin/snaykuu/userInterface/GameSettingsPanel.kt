@@ -64,7 +64,7 @@ class GameSettingsPanel(private val gameSettings: GameSettings): JPanel() {
         add(field)
 
         labelC.gridy++
-        fieldC!!.gridy++
+        fieldC.gridy++
 
         return field
     }

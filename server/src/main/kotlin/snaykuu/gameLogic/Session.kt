@@ -1,5 +1,6 @@
 package snaykuu.gameLogic
 
+import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -21,6 +22,7 @@ class Session @JvmOverloads constructor(
     private var turn: Int = 0
 ): Game {
     private val started = Semaphore(1)
+    private val log = KotlinLogging.logger("session")
 
     override fun getCurrentState(): GameState = GameState(board, snakes, metadata, NotStarted)
     override fun getGameResult(): GameResult = GameResult(snakes, recordedGame.save())
@@ -57,6 +59,7 @@ class Session @JvmOverloads constructor(
                 snake.initAt(position, direction)
                 board.add(position, snake)
             }
+        log.debug { "Snakes placed on board" }
     }
 
     /**
@@ -145,6 +148,7 @@ class Session @JvmOverloads constructor(
      */
     override fun tick(): Game {
         check(!hasEnded()) { "Game has ended" }
+        log.info { "Initiating turn: $turn" }
         turn++
 
         // Ask snake brains what moves they would like to do
@@ -177,6 +181,7 @@ class Session @JvmOverloads constructor(
             .firstOrNull() ?: return false
 
         board.add(position, Fruit)
+        log.debug { "Fruit spawned at $position" }
         return true
     }
 
@@ -212,7 +217,10 @@ class Session @JvmOverloads constructor(
 
         return decisionThreads.asSequence()
             .map { it.key to parseMove(it.key, it.value) }
-            .onEach { outcomes[it.first.value()] = it.second }
+            .onEach {
+                log.debug { "${it.first} -> ${it.second}" }
+                outcomes[it.first.value()] = it.second
+            }
             .map { it.first to it.second.validMoveOr(it.first.getCurrentDirection()) }
             .toMap()
     }

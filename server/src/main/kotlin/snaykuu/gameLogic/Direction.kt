@@ -6,8 +6,6 @@ enum class Direction(private val x: Int, private val y: Int) {
     SOUTH(0, 1),
     EAST(1, 0);
 
-    val directionVector: Position = Position(x, y)
-
     /**
      * Gets the next position a snake would end up in if it continues in this direction.
      *

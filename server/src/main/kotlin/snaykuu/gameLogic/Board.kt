@@ -191,9 +191,7 @@ class Board internal constructor(
     private fun index(position: Position): Int = (position.y * width) + position.x
 
     private operator fun set(position: Position, value: Int) {
-        val current: Int = squares[index(position)]
-        val new: Int = current or value
-        squares[index(position)] = new
+        squares[index(position)] = value
     }
 
     companion object {

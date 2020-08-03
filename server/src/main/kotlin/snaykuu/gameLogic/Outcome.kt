@@ -16,6 +16,14 @@ sealed class Outcome {
             else -> direction
         }
     }
+
+    override fun toString(): String = when(this) {
+        is ValidMove -> move.name
+        InvalidMove -> "Invalid move"
+        NotStarted -> "Not started yet"
+        is ThrewException -> "Exception: ${this.exception}"
+        TimeOut -> "Time out"
+    }
 }
 
 /**
