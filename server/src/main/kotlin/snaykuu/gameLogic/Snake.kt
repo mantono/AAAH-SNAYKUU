@@ -171,20 +171,15 @@ data class Snake @JvmOverloads constructor(
     override fun isLethal(): Boolean = true
 
     companion object {
-        private fun colorForSnake(i: Int, stepSize: Float): Color {
-            val red = Color(255, 0, 0)
-            return red.changeHue(i * stepSize)
-        }
-
         fun create(snakeData: Map<String, Brain?>): MutableSet<Snake> {
             val numSnakes: Int = snakeData.size
-            val stepSize: Float = 360f / numSnakes
+            val colors: List<Color> = distributedColors(numSnakes, 4L)
             return snakeData.asSequence()
                 .sortedBy { it.key }
                 .mapIndexed { index, entry ->
                     val brain: Brain = entry.value ?: BrainDead
-                    val color = colorForSnake(index, stepSize)
-                    Snake(index, entry.key, brain, color = color)
+                    //val color = colorForSnake(index, stepSize)
+                    Snake(index, entry.key, brain, color = colors[index])
                 }
                 .toMutableSet()
         }
