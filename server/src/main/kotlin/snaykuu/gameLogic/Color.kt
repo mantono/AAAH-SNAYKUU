@@ -1,7 +1,9 @@
 package snaykuu.gameLogic
 
+import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 data class Color(
     val red: Int = 0,
@@ -88,19 +90,21 @@ data class Color(
 }
 
 fun distributedColors(colors: Int, seed: Long): List<Color> {
-    return createColors(colors)
+    //return createColors(colors)
+    return colorGenerator(colors, seed)
 }
 
 private tailrec fun createColors(
     limit: Int,
-    colors: List<Color> = listOf(Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW)
+    colors: List<Color> = emptyList()// listOf(Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW)
 ): List<Color> {
     if(colors.size == limit) {
         return colors
     }
-    val r: Int = findNextIndex(colors.map { it.red })
-    val g: Int = findNextIndex(colors.map { it.green })
-    val b: Int = findNextIndex(colors.map { it.blue })
+    val stepSize: Int = 255 / (limit - 4).coerceAtLeast(1)
+    val r: Int = findNextIndex(colors.map { it.red }, stepSize)
+    val g: Int = findNextIndex(colors.map { it.green }, stepSize)
+    val b: Int = findNextIndex(colors.map { it.blue }, stepSize)
     val color: Color = ensureMinSaturation(Color(r, g, b), 0.2f)
     return createColors(limit, colors + color)
 }
@@ -113,16 +117,33 @@ private tailrec fun ensureMinSaturation(color: Color, minSaturation: Float): Col
     }
 }
 
-fun findNextIndex(usedIndices: List<Int>): Int {
-    val longestGap: IntRange = usedIndices.asSequence()
-        .plus(0)
-        .plus(255)
-        .sorted()
-        .zipWithNext()
-        .map { it.first..it.second }
-        .maxBy { it.last - it.first }!!
+fun colorGenerator(colors: Int, seed: Long = colors.toLong()): List<Color> {
+    val random = Random(seed)
+    val stepSize: Int = 255 / (colors - 1).coerceAtLeast(1)
+    val boundaries: IntProgression = 0..255 step stepSize
+    val red = boundaries.toList().shuffled(random)
+    val green = red.reversed()
+    val blue = red.zip(green).asSequence().map { (red, green) ->
+        boundaries.first { it != red && it != green }
+    }.toList()
+    var i: Int = 0
 
-    return longestGap.middle()
+    return generateSequence { Color(red[i], green[i], blue[i++]) }
+        .take(colors)
+        .onEach { println("${it.red}|${it.green}|${it.blue}") }
+        .toList()
+}
+
+fun findNextIndex(
+    usedIndices: List<Int>,
+    multiplier: Int,
+    upperThreshold: Int = 255
+): Int {
+    val boundaries: IntProgression = 0..upperThreshold step multiplier
+    return boundaries.asSequence()
+        .filterNot { it in usedIndices }
+        .toList()
+        .random()
 }
 
 fun IntRange.middle(): Int {
