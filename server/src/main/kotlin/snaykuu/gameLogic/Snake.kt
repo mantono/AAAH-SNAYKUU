@@ -173,7 +173,7 @@ data class Snake @JvmOverloads constructor(
     companion object {
         fun create(snakeData: Map<String, Brain?>): MutableSet<Snake> {
             val numSnakes: Int = snakeData.size
-            val colors: List<Color> = distributedColors(numSnakes, 4L)
+            val colors: List<Color> = distributedColors(numSnakes)
             return snakeData.asSequence()
                 .sortedBy { it.key }
                 .mapIndexed { index, entry ->
